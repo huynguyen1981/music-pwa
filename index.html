@@ -1,845 +1,584 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neon Music Player</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#ff2dff">
-
-<style>
-:root {
-  --bg: #050510;
-  --bg2: #0b0b18;
-  --card: #141424;
-  --card2: #1c1c30;
-  --glass: rgba(20,20,40,0.75);
-  --border-glass: rgba(255,255,255,0.08);
-  --text: #ffffff;
-  --text-sub: #b0b0c0;
-  --pink: #ff2dff;
-  --cyan: #00eaff;
-}
-:root.light {
-  --bg: #f7f4ff;
-  --bg2: #f0ecff;
-  --card: #ffffff;
-  --card2: #f7f3ff;
-  --glass: rgba(255,255,255,0.8);
-  --border-glass: rgba(0,0,0,0.06);
-  --text: #111111;
-  --text-sub: #666666;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #1b1030 0, #050510 55%);
-  color: var(--text);
-  display: flex;
-  justify-content: center;
-  min-height: 100vh;
-  overflow: hidden;
-}
-
-.app {
-  width: 100%;
-  max-width: 480px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-/* HEADER */
-header {
-  padding: 16px 18px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.logo {
-  font-size: 22px;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  -webkit-background-clip: text;
-  color: transparent;
-}
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-}
-#theme-toggle {
-  border:none;
-  background:rgba(255,255,255,0.06);
-  color:var(--text-sub);
-  padding:6px 10px;
-  border-radius:999px;
-  font-size:11px;
-}
-
-/* SCREENS */
-.screens {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
-.screen {
-  position: absolute;
-  inset: 0;
-  padding: 10px 16px 110px;
-  opacity: 0;
-  transform: translateX(40px);
-  pointer-events: none;
-  transition: opacity .25s ease, transform .25s ease;
-}
-.screen.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
-}
-
-/* HOME */
-.big-icon {
-  width: 110px;
-  height: 110px;
-  border-radius: 32px;
-  margin: 10px auto 6px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 60px;
-  color: #000;
-  box-shadow: 0 0 25px var(--pink);
-}
-.subtext {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-sub);
-  padding: 0 30px;
-  line-height: 1.4;
-}
-.controls {
-  margin-top: 22px;
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-}
-.ctrl-btn {
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  background: var(--card2);
-  border: 2px solid rgba(255,255,255,0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: var(--pink);
-  box-shadow: 0 0 12px rgba(0,0,0,0.8);
-}
-.ctrl-btn.play {
-  width: 70px;
-  height: 70px;
-  font-size: 30px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  color: #000;
-  border: none;
-  box-shadow: 0 0 20px var(--pink);
-}
-
-/* MINI EQ */
-.eq-mini {
-  margin: 24px auto 0;
-  width: 120px;
-  height: 40px;
-  display: flex;
-  gap: 6px;
-  align-items: flex-end;
-}
-.eq-bar {
-  width: 10px;
-  background: linear-gradient(180deg, var(--pink), var(--cyan));
-  border-radius: 6px;
-  animation: bounce 1s infinite ease-in-out;
-}
-.eq-bar:nth-child(2) { animation-delay: .15s; }
-.eq-bar:nth-child(3) { animation-delay: .3s; }
-.eq-bar:nth-child(4) { animation-delay: .45s; }
-
-@keyframes bounce {
-  0%, 100% { height: 20%; opacity: .5; }
-  50% { height: 100%; opacity: 1; }
-}
-
-/* PLAYLIST */
-.section-title {
-  font-size: 14px;
-  color: var(--text-sub);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 10px;
-}
-.playlist-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.pl-tab {
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(20,20,40,0.9);
-  color: var(--text-sub);
-  font-size: 13px;
-}
-.pl-tab.active {
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  color: #000;
-  font-weight: 600;
-}
-.track-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.track-card {
-  background: var(--glass);
-  border-radius: 16px;
-  padding: 10px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  border: 1px solid var(--border-glass);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 18px rgba(0,0,0,0.7);
-}
-.track-thumb {
-  width: 70px;
-  height: 70px;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #000;
-  flex-shrink: 0;
-}
-.track-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.track-info {
-  flex: 1;
-}
-.track-title {
-  font-size: 14px;
-  font-weight: 600;
-}
-.track-meta {
-  font-size: 12px;
-  color: var(--text-sub);
-  margin-top: 3px;
-}
-.track-play {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #000;
-  font-size: 18px;
-  box-shadow: 0 0 15px var(--pink);
-  cursor: pointer;
-}
-
-/* EQ SCREEN */
-.eq-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-}
-.eq-visual {
-  margin: 10px auto 18px;
-  width: 180px;
-  height: 70px;
-  display: flex;
-  gap: 6px;
-  align-items: flex-end;
-}
-.eq-visual .eq-bar {
-  width: 12px;
-}
-.knobs {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-top: 10px;
-}
-.knob-wrap {
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-sub);
-}
-.knob {
-  width: 70px;
-  height: 70px;
-  border-radius: 999px;
-  margin: 0 auto 6px;
-  background: radial-gradient(circle at 30% 30%, #ffffff33 0, #000 55%);
-  border: 2px solid var(--border-glass);
-  position: relative;
-  box-shadow: 0 0 18px rgba(0,0,0,0.8);
-}
-.knob-dot {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--cyan);
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%) rotate(0deg);
-  transform-origin: 50% 27px;
-}
-
-/* MINI PLAYER */
-.mini-player {
-  position: fixed;
-  left: 0; right: 0;
-  bottom: 70px;
-  max-width: 480px;
-  margin: 0 auto;
-  height: 56px;
-  padding: 6px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(10,10,20,0.9);
-  border-top: 1px solid var(--border-glass);
-  backdrop-filter: blur(18px);
-}
-.mini-thumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #000;
-}
-.mini-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.mini-info {
-  flex: 1;
-}
-.mini-title {
-  font-size: 13px;
-}
-.mini-meta {
-  font-size: 11px;
-  color: var(--text-sub);
-}
-.mini-play {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #000;
-  font-size: 18px;
-  cursor: pointer;
-}
-.mini-progress {
-  width: 100%;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden;
-  margin-top: 3px;
-}
-.mini-progress-inner {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--pink), var(--cyan));
-  transition: width .3s linear;
-}
-
-/* NAVBAR */
-.navbar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  max-width: 480px;
-  margin: 0 auto;
-  height: 70px;
-  background: rgba(5,5,15,0.96);
-  border-top: 1px solid #222;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  backdrop-filter: blur(18px);
-}
-.nav-item {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-sub);
-  cursor: pointer;
-}
-.nav-item .icon {
-  font-size: 20px;
-  margin-bottom: 2px;
-}
-.nav-item.active {
-  color: var(--cyan);
-  font-weight: 600;
-}
-
-/* FAB */
-.fab {
-  position: fixed;
-  right: 18px;
-  bottom: 130px;
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  color: #000;
-  font-size: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 20px var(--pink);
-  cursor: pointer;
-}
-
-/* SHEET */
-.sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-}
-.sheet {
-  width: 100%;
-  max-width: 480px;
-  background: rgba(15,15,30,0.96);
-  border-radius: 18px 18px 0 0;
-  padding: 14px 16px 18px;
-  border-top: 1px solid var(--border-glass);
-  backdrop-filter: blur(22px);
-}
-.sheet-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 999px;
-  background: #444;
-  margin: 0 auto 10px;
-}
-.sheet-title {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.field {
-  margin-bottom: 10px;
-}
-.field label {
-  font-size: 12px;
-  color: var(--text-sub);
-}
-.field input {
-  width: 100%;
-  padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #050510;
-  color: #fff;
-  font-size: 13px;
-}
-.sheet-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.btn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 999px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-}
-.btn-ghost {
-  background: #222236;
-  color: var(--text-sub);
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--pink), var(--cyan));
-  color: #000;
-  font-weight: 600;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveCompanion - PCN Music Hub</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        .portal-panel {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+        }
+        .accent-cyan { color: #06b6d4; }
+        .bg-cyan { background-color: #06b6d4; }
+        .accent-magenta { color: #d946ef; }
+        .bg-magenta { background-color: #d946ef; }
+        .active-row {
+            background-color: rgba(6, 182, 212, 0.1);
+            border-left: 4px solid #06b6d4;
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+        .spinning {
+            animation: spin 12s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        
+        /* Giấu Iframe YouTube một cách tinh tế để tránh lỗi ngắt tiến trình phát */
+        #yt-hidden-wrapper {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            opacity: 0;
+        }
+    </style>
 </head>
+<body class="flex flex-col items-center justify-start min-h-screen p-2 sm:p-4 selection:bg-cyan-500/30">
 
-<body>
-<div class="app">
-  <header>
-    <div class="logo">Neon Music</div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button id="theme-toggle">Dark</button>
-      <div class="avatar"></div>
-    </div>
-  </header>
-
-  <div class="screens">
-    <!-- HOME -->
-    <div class="screen active" id="screen-home">
-      <div class="big-icon">🎤</div>
-      <div class="subtext">
-        Nghe nhạc kiểu neon — playlist YouTube, UI xịn, cảm hứng như club nhưng ngồi tại nhà.
-      </div>
-      <div class="controls">
-        <div class="ctrl-btn" id="btn-prev">⏮</div>
-        <div class="ctrl-btn play" id="btn-play-main">▶</div>
-        <div class="ctrl-btn" id="btn-next">⏭</div>
-      </div>
-      <div class="eq-mini">
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-      </div>
+    <div id="yt-hidden-wrapper">
+        <div id="yt-player-node"></div>
     </div>
 
-    <!-- PLAYLIST -->
-    <div class="screen" id="screen-playlist">
-      <div class="section-title">Playlist</div>
-      <div class="playlist-tabs" id="playlist-tabs"></div>
-      <div class="track-list" id="track-list"></div>
-    </div>
+    <main class="w-full max-w-md h-[620px] portal-panel rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto border border-gray-800">
+        
+        <header class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 shrink-0">
+            <div>
+                <h1 class="text-sm font-bold tracking-wider text-gray-200 uppercase flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-magenta animate-pulse"></span>
+                    DriveCompanion
+                </h1>
+                <p class="text-xs text-gray-400 mt-0.5">OKC NODE: PWA Cloud — Connected</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="tab-btn-player" class="px-3 py-1 text-xs font-semibold rounded bg-cyan text-gray-900 transition-all cursor-pointer">Player</button>
+                <button id="tab-btn-playlists" class="px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer">Playlists</button>
+            </div>
+        </header>
 
-    <!-- EQ -->
-    <div class="screen" id="screen-eq">
-      <div class="eq-title">Equalizer</div>
-      <div class="eq-visual">
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-        <div class="eq-bar"></div>
-      </div>
-      <div class="knobs">
-        <div class="knob-wrap">
-          <div class="knob">
-            <div class="knob-dot" id="knob-bass"></div>
-          </div>
-          <div>Bass</div>
+        <section id="view-player" class="p-6 flex flex-col justify-between flex-1 overflow-y-auto">
+            <div class="text-center w-full shrink-0">
+                <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Current Playlist</span>
+                <span id="current-playlist-name" class="text-sm font-medium text-cyan-400 border border-cyan-500/30 px-2.5 py-0.5 rounded-full bg-cyan-950/30">Loading...</span>
+            </div>
+
+            <div class="flex justify-center items-center my-auto shrink-0 py-4">
+                <div id="visualizer-disk" class="w-48 h-48 rounded-full bg-gradient-to-tr from-gray-950 via-gray-800 to-gray-950 border-4 border-gray-800 flex items-center justify-center relative neon-glow">
+                    <div class="absolute inset-3 rounded-full border border-dashed border-cyan-500/20"></div>
+                    <div class="absolute inset-8 rounded-full border border-gray-900"></div>
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-magenta flex items-center justify-center p-1 shadow-lg">
+                        <div class="w-full h-full rounded-full bg-gray-900 flex items-center justify-center">
+                            <div class="w-3 h-3 rounded-full bg-cyan shadow-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center w-full px-4 shrink-0">
+                <h2 id="player-track-title" class="text-sm font-semibold text-white truncate">Chưa nạp bài hát</h2>
+                <p id="player-track-status" class="text-xs text-gray-400 mt-1">Đang sẵn sàng kết nối Cloud</p>
+            </div>
+
+            <div class="w-full px-2 shrink-0 mt-4">
+                <div class="flex justify-between text-[10px] text-gray-500 font-mono mb-1">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+                <input type="range" id="progress-bar" min="0" max="100" value="0" class="w-full accent-cyan bg-gray-800 h-1 rounded-lg cursor-pointer">
+            </div>
+
+            <div class="flex items-center justify-center gap-6 w-full shrink-0 mt-4">
+                <button id="btn-shuffle" class="text-gray-500 hover:text-gray-300 transition-colors text-sm cursor-pointer" title="Bật trộn bài">
+                    <i class="fa-solid fa-shuffle"></i>
+                </button>
+                <button id="btn-prev" class="text-gray-400 hover:text-cyan-400 transition-colors text-xl cursor-pointer">
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+                <button id="btn-play-pause" class="w-12 h-12 rounded-full bg-cyan text-gray-900 flex items-center justify-center text-lg hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20 cursor-pointer">
+                    <i class="fa-solid fa-play ml-0.5"></i>
+                </button>
+                <button id="btn-next" class="text-gray-400 hover:text-cyan-400 transition-colors text-xl cursor-pointer">
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+                <button id="btn-repeat" class="text-gray-500 hover:text-gray-300 transition-colors text-sm relative cursor-pointer" title="Lặp danh sách">
+                    <i class="fa-solid fa-repeat"></i>
+                    <span id="repeat-badge" class="absolute -top-2 -right-2 text-[8px] bg-magenta text-white px-1 rounded-full hidden">1</span>
+                </button>
+            </div>
+        </section>
+
+        <section id="view-playlists" class="p-4 flex flex-col justify-between flex-1 hidden overflow-hidden">
+            <div class="flex flex-col space-y-3 flex-1 overflow-y-auto pr-0.5 mb-2">
+                <div class="p-3 bg-gray-900 rounded-lg border border-gray-800 shrink-0">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1.5">Dán Link YouTube (Video, Short, Hoặc ID)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="input-yt-url" placeholder="https://www.youtube.com/watch?v=..." class="flex-1 bg-gray-950 border border-gray-800 rounded px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500">
+                        <button id="btn-parse-link" class="bg-cyan hover:bg-cyan-400 text-gray-900 px-3 py-1.5 rounded text-xs font-bold transition-all shrink-0 cursor-pointer">Nạp Track</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2 shrink-0">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-magenta">Danh Sách Playlist</label>
+                        <button id="btn-create-playlist" class="text-[11px] text-cyan-400 hover:underline cursor-pointer"><i class="fa-solid fa-plus mr-1"></i>Tạo mới</button>
+                    </div>
+                    <select id="select-playlist" class="w-full bg-gray-950 border border-gray-800 rounded px-2 py-2 text-xs text-white focus:outline-none focus:border-magenta-500"></select>
+                </div>
+
+                <div class="flex flex-col flex-1 min-h-0">
+                    <div class="flex justify-between items-center mb-1.5 shrink-0">
+                        <span class="text-xs text-gray-400 font-semibold" id="tracklist-count">Bài hát (0)</span>
+                        <div class="flex gap-2">
+                            <button id="btn-export" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-300 cursor-pointer"><i class="fa-solid fa-download mr-1"></i>Export</button>
+                            <button id="btn-import" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-300 cursor-pointer"><i class="fa-solid fa-upload mr-1"></i>Import</button>
+                        </div>
+                    </div>
+                    <div id="track-list-box" class="space-y-1 overflow-y-auto flex-1 border border-gray-900 p-1 rounded bg-gray-950/20"></div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="p-2 bg-gray-950 border-t border-gray-900 text-center text-[10px] text-gray-600 font-mono shrink-0">
+            PWA Core & Cloud Sync: <span class="text-green-500 font-bold">READY</span>
+        </footer>
+    </main>
+
+    <div id="modal-create" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-2xl">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-cyan-400 mb-3">Khởi tạo danh sách mới</h3>
+            <input type="text" id="input-playlist-name" placeholder="Tên playlist..." class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 mb-4">
+            <div class="flex justify-end gap-2">
+                <button id="btn-create-cancel" class="px-3 py-1.5 bg-gray-800 text-gray-400 rounded text-xs cursor-pointer">Hủy</button>
+                <button id="btn-create-confirm" class="px-4 py-1.5 bg-cyan text-gray-900 font-bold rounded text-xs cursor-pointer">Tạo</button>
+            </div>
         </div>
-        <div class="knob-wrap">
-          <div class="knob">
-            <div class="knob-dot" id="knob-treble"></div>
-          </div>
-          <div>Treble</div>
+    </div>
+
+    <div id="modal-alert" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="w-full max-w-xs bg-gray-900 border border-magenta/40 rounded-xl p-5 shadow-xl text-center">
+            <div id="alert-icon" class="text-magenta text-2xl mb-2"><i class="fa-solid fa-circle-info"></i></div>
+            <p id="alert-message" class="text-xs text-gray-300 font-medium mb-4 px-2">Thông báo</p>
+            <button id="btn-alert-close" class="px-5 py-1.5 bg-gray-800 text-white font-bold rounded text-xs cursor-pointer">Xác Nhận</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- MINI PLAYER -->
-  <div class="mini-player" id="mini-player">
-    <div class="mini-thumb"><img id="mini-thumb-img" src="" alt=""></div>
-    <div class="mini-info">
-      <div class="mini-title" id="mini-title">Chưa chọn bài</div>
-      <div class="mini-meta" id="mini-meta">Playlist • YouTube</div>
-      <div class="mini-progress">
-        <div class="mini-progress-inner" id="mini-progress-inner"></div>
-      </div>
+    <div id="modal-import" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-2xl">
+            <textarea id="textarea-import-json" rows="6" placeholder="Dán chuỗi cấu hình JSON vào đây..." class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500 mb-3"></textarea>
+            <div class="flex justify-end gap-2">
+                <button id="btn-modal-cancel" class="px-3 py-1 bg-gray-800 text-gray-400 rounded text-xs cursor-pointer">Hủy</button>
+                <button id="btn-modal-confirm" class="px-3 py-1 bg-cyan text-gray-900 font-bold rounded text-xs cursor-pointer">Đồng bộ</button>
+            </div>
+        </div>
     </div>
-    <div class="mini-play" id="mini-play-btn">▶</div>
-  </div>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div class="nav-item active" data-screen="home">
-      <div class="icon">🏠</div>
-      Trang chủ
-    </div>
-    <div class="nav-item" data-screen="playlist">
-      <div class="icon">🎵</div>
-      Playlist
-    </div>
-    <div class="nav-item" data-screen="eq">
-      <div class="icon">🎚️</div>
-      EQ
-    </div>
-  </div>
+    <script src="https://www.youtube.com/iframe_api"></script>
 
-  <!-- FAB -->
-  <div class="fab" id="fab-add">+</div>
+    <script>
+        // --- 1. ĐĂNG KÝ SERVICE WORKER (BẮT BUỘC CHO PWA) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('PWA Service Worker registered successfully!', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
 
-  <!-- SHEET -->
-  <div class="sheet-backdrop" id="sheet-backdrop">
-    <div class="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-title">Thêm bài vào playlist</div>
-      <div class="field">
-        <label>Tên bài hát (để trống tui tự đặt)</label>
-        <input id="input-title" placeholder="VD: Fortnight - Taylor Swift">
-      </div>
-      <div class="field">
-        <label>Link YouTube</label>
-        <input id="input-url" placeholder="https://www.youtube.com/watch?v=...">
-      </div>
-      <div class="sheet-actions">
-        <button class="btn btn-ghost" id="btn-cancel">Hủy</button>
-        <button class="btn btn-primary" id="btn-add">Thêm</button>
-      </div>
-    </div>
-  </div>
-</div>
+        // --- 2. CƠ SỞ DỮ LIỆU ĐỒNG BỘ LOCALSTORAGE ---
+        const DEFAULT_PLAYLISTS = {
+            "🔥 Nhạc Hot Cloud": [
+                { id: "M0R_tVqfJIE", title: "Sơn Tùng M-TP - Đừng Làm Trái Tim Anh Đau" },
+                { id: "aIOnLz96fio", title: "Soobin Hoàng Sơn - Giá Như" },
+                { id: "1v6L96277Fw", title: "HIEUTHUHAI - Không Thể Say" }
+            ],
+            "☕ Chill Out Lofi": [
+                { id: "jfKfPfyJRdk", title: "Lofi Girl - Synthwave Beats" },
+                { id: "TURM7reS_48", title: "Chillhop Radio Live" }
+            ]
+        };
 
-<script>
-/* PLAYLIST DATA */
-const playlists = {
-  "Top 10 US-UK": [
-    { title: "Fortnight - Taylor Swift", id: "q3zqJs7JUCQ" },
-    { title: "Lose Control - Teddy Swims", id: "GZ3zL7kT6_c" },
-    { title: "Beautiful Things - Benson Boone", id: "q04KXl4VqAE" },
-    { title: "Greedy - Tate McRae", id: "vyBk2l2jv0Y" },
-    { title: "Espresso - Sabrina Carpenter", id: "eVli-tstM5E" },
-    { title: "Cruel Summer - Taylor Swift", id: "ic8j13piAhQ" },
-    { title: "Blinding Lights - The Weeknd", id: "fHI8X4OXluQ" },
-    { title: "Flowers - Miley Cyrus", id: "G7KNmW9a75Y" },
-    { title: "As It Was - Harry Styles", id: "H5v3kku4y6Q" },
-    { title: "Anti-Hero - Taylor Swift", id: "b1kbLwvqugk" }
-  ],
-  "Top 10 VN": [
-    { title: "Nếu lúc đó - tlinh", id: "x5ZkYyqS-gE" },
-    { title: "Thích Thích - Phương Ly", id: "5vQwqKqRR3I" },
-    { title: "Chúng ta của tương lai - Sơn Tùng M-TP", id: "kXYiU_JCYtU" },
-    { title: "Nơi này có anh - Sơn Tùng M-TP", id: "F6Q7kHkG8Vw" },
-    { title: "Hơn cả yêu - Đức Phúc", id: "2x8evJ6bQpA" },
-    { title: "3107 - W/n", id: "q0hyYWKXF0Q" },
-    { title: "Lạc trôi - Sơn Tùng M-TP", id: "Llw9Q6akRo4" },
-    { title: "Chạy ngay đi - Sơn Tùng M-TP", id: "32sYGCOYJUM" },
-    { title: "Có em - Madihu ft Low G", id: "5vHTh_Ko1x8" },
-    { title: "Tháng tư là lời nói dối của em - Hà Anh Tuấn", id: "kqGgqS0bkk8" }
-  ],
-  "Lo-fi": [
-    { title: "lofi hip hop radio - beats to relax/study to", id: "jfKfPfyJRdk" },
-    { title: "Chillhop Essentials", id: "5yx6BWlEVcY" }
-  ]
-};
+        let playlists = JSON.parse(localStorage.getItem('pcn_playlists')) || DEFAULT_PLAYLISTS;
+        let activePlaylistKey = localStorage.getItem('pcn_active_playlist_key') || Object.keys(playlists)[0];
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let isShuffle = false;
+        let repeatMode = 0; // 0: Không lặp, 1: Lặp danh sách, 2: Lặp 1 bài
+        let ytPlayer = null;
+        let progressInterval = null;
 
-let currentPlaylistName = "Top 10 US-UK";
-let currentTrack = null;
+        // UI Selectors
+        const tabBtnPlayer = document.getElementById('tab-btn-player');
+        const tabBtnPlaylists = document.getElementById('tab-btn-playlists');
+        const viewPlayer = document.getElementById('view-player');
+        const viewPlaylists = document.getElementById('view-playlists');
+        const selectPlaylist = document.getElementById('select-playlist');
+        const trackListBox = document.getElementById('track-list-box');
+        const currentPlaylistName = document.getElementById('current-playlist-name');
+        const playerTrackTitle = document.getElementById('player-track-title');
+        const playerTrackStatus = document.getElementById('player-track-status');
+        const btnPlayPause = document.getElementById('btn-play-pause');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnShuffle = document.getElementById('btn-shuffle');
+        const btnRepeat = document.getElementById('btn-repeat');
+        const repeatBadge = document.getElementById('repeat-badge');
+        const progressBar = document.getElementById('progress-bar');
+        const timeCurrent = document.getElementById('time-current');
+        const timeTotal = document.getElementById('time-total');
+        const visualizerDisk = document.getElementById('visualizer-disk');
+        const modalCreate = document.getElementById('modal-create');
+        const modalAlert = document.getElementById('modal-alert');
+        const modalImport = document.getElementById('modal-import');
 
-/* DOM */
-const screens = {
-  home: document.getElementById("screen-home"),
-  playlist: document.getElementById("screen-playlist"),
-  eq: document.getElementById("screen-eq")
-};
-const navItems = document.querySelectorAll(".nav-item");
-const playlistTabsEl = document.getElementById("playlist-tabs");
-const trackListEl = document.getElementById("track-list");
-const miniThumbImg = document.getElementById("mini-thumb-img");
-const miniTitleEl = document.getElementById("mini-title");
-const miniMetaEl = document.getElementById("mini-meta");
-const miniPlayBtn = document.getElementById("mini-play-btn");
-const miniProgressInner = document.getElementById("mini-progress-inner");
-const fabAdd = document.getElementById("fab-add");
-const sheetBackdrop = document.getElementById("sheet-backdrop");
-const inputTitle = document.getElementById("input-title");
-const inputUrl = document.getElementById("input-url");
-const btnCancel = document.getElementById("btn-cancel");
-const btnAdd = document.getElementById("btn-add");
-const knobBass = document.getElementById("knob-bass");
-const knobTreble = document.getElementById("knob-treble");
-const themeToggle = document.getElementById("theme-toggle");
+        function showCustomAlert(msg, iconClass = "fa-circle-info", colorClass = "text-magenta") {
+            document.getElementById('alert-message').textContent = msg;
+            document.getElementById('alert-icon').innerHTML = `<i class="fa-solid ${iconClass} ${colorClass}"></i>`;
+            modalAlert.classList.remove('hidden');
+        }
+        document.getElementById('btn-alert-close').addEventListener('click', () => modalAlert.classList.add('hidden'));
 
-let currentScreen = "home";
+        // --- 3. ĐIỀU HƯỚNG SỰ KIỆN IFRAME API GOOGLE (Không dính lỗi 153 khi ở Web HTTPS) ---
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-player-node', {
+                height: '200',
+                width: '200',
+                videoId: '',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange,
+                    'onError': onPlayerError
+                }
+            });
+        }
 
-/* THEME */
-let isLight = false;
-themeToggle.onclick = () => {
-  isLight = !isLight;
-  document.documentElement.classList.toggle("light", isLight);
-  themeToggle.textContent = isLight ? "Light" : "Dark";
-};
+        function onPlayerReady(event) {
+            initPlaylistDropdown();
+            loadTrack(currentTrackIndex, false);
+        }
 
-/* SCREEN SWITCH */
-function showScreen(name) {
-  if (name === currentScreen) return;
-  Object.keys(screens).forEach(key => {
-    screens[key].classList.toggle("active", key === name);
-  });
-  navItems.forEach(item => {
-    item.classList.toggle("active", item.dataset.screen === name);
-  });
-  currentScreen = name;
-}
-navItems.forEach(item => {
-  item.addEventListener("click", () => showScreen(item.dataset.screen));
-});
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                isPlaying = true;
+                btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+                playerTrackStatus.textContent = "Đang phát ổn định từ YouTube Cloud";
+                visualizerDisk.classList.add('spinning');
+                startProgressTracker();
+            } 
+            else if (event.data == YT.PlayerState.PAUSED) {
+                isPlaying = false;
+                btnPlayPause.innerHTML = `<i class="fa-solid fa-play ml-0.5"></i>`;
+                playerTrackStatus.textContent = "Đang tạm dừng";
+                visualizerDisk.classList.remove('spinning');
+                stopProgressTracker();
+            } 
+            else if (event.data == YT.PlayerState.ENDED) {
+                stopProgressTracker();
+                handleTrackEnded();
+            }
+        }
 
-/* PLAYLIST TABS + LIST */
-function ytThumb(id) {
-  return "https://img.youtube.com/vi/" + id + "/hqdefault.jpg";
-}
-function renderPlaylistTabs() {
-  playlistTabsEl.innerHTML = "";
-  Object.keys(playlists).forEach(name => {
-    const div = document.createElement("div");
-    div.className = "pl-tab" + (name === currentPlaylistName ? " active" : "");
-    div.textContent = name;
-    div.onclick = () => {
-      currentPlaylistName = name;
-      renderPlaylistTabs();
-      renderTrackList();
-    };
-    playlistTabsEl.appendChild(div);
-  });
-}
-function renderTrackList() {
-  trackListEl.innerHTML = "";
-  const list = playlists[currentPlaylistName] || [];
-  list.forEach((t, i) => {
-    const card = document.createElement("div");
-    card.className = "track-card";
-    card.innerHTML = `
-      <div class="track-thumb">
-        <img src="${ytThumb(t.id)}" alt="">
-      </div>
-      <div class="track-info">
-        <div class="track-title">${t.title}</div>
-        <div class="track-meta">#${i+1} • ${currentPlaylistName}</div>
-      </div>
-      <div class="track-play">▶</div>
-    `;
-    card.querySelector(".track-play").onclick = () => {
-      setCurrentTrack(t, currentPlaylistName, i+1);
-      openYouTube(t.id);
-    };
-    trackListEl.appendChild(card);
-  });
-}
+        function onPlayerError(event) {
+            console.error("YouTube Core Error Code:", event.data);
+            playerTrackStatus.textContent = "Bản quyền chặn phát! Đang chuyển tiếp...";
+            setTimeout(() => triggerNextTrack(), 2000);
+        }
 
-/* CURRENT TRACK + MINI PLAYER */
-function setCurrentTrack(track, playlistName, index) {
-  currentTrack = { ...track, playlistName, index };
-  miniThumbImg.src = ytThumb(track.id);
-  miniTitleEl.textContent = track.title;
-  miniMetaEl.textContent = `${playlistName} • #${index}`;
-}
-let fakeProgress = 0;
-let fakeTimer = null;
-function startFakeProgress() {
-  clearInterval(fakeTimer);
-  fakeProgress = 0;
-  miniProgressInner.style.width = "0%";
-  fakeTimer = setInterval(() => {
-    fakeProgress += 3;
-    if (fakeProgress > 100) fakeProgress = 0;
-    miniProgressInner.style.width = fakeProgress + "%";
-  }, 800);
-}
-function openYouTube(id) {
-  startFakeProgress();
-  location.href = "https://www.youtube.com/watch?v=" + id;
-}
-miniPlayBtn.onclick = () => {
-  if (!currentTrack) return;
-  openYouTube(currentTrack.id);
-};
+        // --- 4. ENGINE ĐIỀU KHIỂN NHẠC ---
+        function loadTrack(index, autoPlay = false) {
+            const tracks = playlists[activePlaylistKey] || [];
+            if (tracks.length === 0) {
+                playerTrackTitle.textContent = "Không có bài hát";
+                playerTrackStatus.textContent = "Vui lòng nạp thêm bài hát mới";
+                return;
+            }
 
-/* MAIN PLAYER BUTTONS */
-document.getElementById("btn-prev").onclick = () => jumpTrack(-1);
-document.getElementById("btn-next").onclick = () => jumpTrack(1);
-document.getElementById("btn-play-main").onclick = () => {
-  if (!currentTrack) {
-    const first = playlists[currentPlaylistName][0];
-    if (!first) return;
-    setCurrentTrack(first, currentPlaylistName, 1);
-  }
-  openYouTube(currentTrack.id);
-};
-function jumpTrack(delta) {
-  const list = playlists[currentPlaylistName];
-  if (!list || !list.length) return;
-  let idx = 0;
-  if (currentTrack && currentTrack.playlistName === currentPlaylistName) {
-    idx = currentTrack.index - 1;
-  }
-  idx = (idx + delta + list.length) % list.length;
-  const t = list[idx];
-  setCurrentTrack(t, currentPlaylistName, idx+1);
-}
+            currentTrackIndex = index;
+            const track = tracks[index];
+            playerTrackTitle.textContent = track.title;
+            playerTrackStatus.textContent = "Đang đồng bộ luồng Cloud...";
 
-/* SHEET ADD SONG */
-fabAdd.onclick = () => {
-  sheetBackdrop.style.display = "flex";
-  inputTitle.value = "";
-  inputUrl.value = "";
-  inputUrl.focus();
-};
-btnCancel.onclick = () => sheetBackdrop.style.display = "none";
-sheetBackdrop.addEventListener("click", e => {
-  if (e.target === sheetBackdrop) sheetBackdrop.style.display = "none";
-});
-function extractId(url) {
-  if (!url) return null;
-  url = url.trim();
-  if (!url.includes(" ") && !url.includes("/") && !url.includes("?")) return url;
-  const m = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
-  return m ? m[1] : null;
-}
-btnAdd.onclick = () => {
-  const rawTitle = inputTitle.value.trim();
-  const url = inputUrl.value.trim();
-  const id = extractId(url);
-  if (!id) {
-    alert("Không nhận diện được ID YouTube. Bồ kiểm tra lại link nha.");
-    return;
-  }
-  const title = rawTitle || ("YouTube video (" + id + ")");
-  playlists[currentPlaylistName].push({ title, id });
-  renderTrackList();
-  sheetBackdrop.style.display = "none";
-};
+            if (ytPlayer && ytPlayer.cueVideoById) {
+                if (autoPlay) {
+                    ytPlayer.loadVideoById(track.id);
+                    isPlaying = true;
+                } else {
+                    ytPlayer.cueVideoById(track.id);
+                    isPlaying = false;
+                }
+            }
+            updatePlayerControlsUI();
+        }
 
-/* KNOB FAKE ANIM */
-let bassAngle = 0;
-let trebleAngle = 0;
-function randomKnob() {
-  bassAngle = (bassAngle + (Math.random()*40-20)) % 180;
-  trebleAngle = (trebleAngle + (Math.random()*40-20)) % 180;
-  knobBass.style.transform = `translateX(-50%) rotate(${bassAngle-90}deg)`;
-  knobTreble.style.transform = `translateX(-50%) rotate(${trebleAngle-90}deg)`;
-}
-setInterval(randomKnob, 900);
+        btnPlayPause.addEventListener('click', () => {
+            if (!ytPlayer) return;
+            if (isPlaying) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
+            }
+        });
 
-/* INIT */
-renderPlaylistTabs();
-renderTrackList();
-setCurrentTrack(playlists[currentPlaylistName][0], currentPlaylistName, 1);
+        function startProgressTracker() {
+            stopProgressTracker();
+            progressInterval = setInterval(() => {
+                if (ytPlayer && ytPlayer.getCurrentTime) {
+                    const current = ytPlayer.getCurrentTime();
+                    const total = ytPlayer.getDuration();
+                    if (total > 0) {
+                        const pct = (current / total) * 100;
+                        progressBar.value = pct;
+                        timeCurrent.textContent = formatTime(current);
+                        timeTotal.textContent = formatTime(total);
+                    }
+                }
+            }, 500);
+        }
 
-/* SW REGISTER */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(()=>{});
-}
-</script>
+        function stopProgressTracker() {
+            if (progressInterval) clearInterval(progressInterval);
+        }
+
+        progressBar.addEventListener('input', (e) => {
+            if (ytPlayer && ytPlayer.getDuration) {
+                const total = ytPlayer.getDuration();
+                const newTime = (e.target.value / 100) * total;
+                ytPlayer.seekTo(newTime, true);
+            }
+        });
+
+        function handleTrackEnded() {
+            if (repeatMode === 2) {
+                loadTrack(currentTrackIndex, true);
+            } else {
+                triggerNextTrack();
+            }
+        }
+
+        btnNext.addEventListener('click', () => triggerNextTrack());
+        btnPrev.addEventListener('click', () => {
+            const tracks = playlists[activePlaylistKey] || [];
+            if (tracks.length === 0) return;
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * tracks.length);
+            } else {
+                currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+            }
+            loadTrack(currentTrackIndex, true);
+        });
+
+        function triggerNextTrack() {
+            const tracks = playlists[activePlaylistKey] || [];
+            if (tracks.length === 0) return;
+            if (isShuffle) {
+                currentTrackIndex = Math.floor(Math.random() * tracks.length);
+            } else {
+                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+            }
+            loadTrack(currentTrackIndex, true);
+        }
+
+        btnShuffle.addEventListener('click', () => {
+            isShuffle = !isShuffle;
+            updatePlayerControlsUI();
+        });
+
+        btnRepeat.addEventListener('click', () => {
+            repeatMode = (repeatMode + 1) % 3;
+            updatePlayerControlsUI();
+        });
+
+        function updatePlayerControlsUI() {
+            btnShuffle.className = isShuffle ? "text-cyan-400 text-sm font-bold cursor-pointer" : "text-gray-500 text-sm cursor-pointer";
+            if (repeatMode === 0) {
+                btnRepeat.className = "text-gray-500 text-sm cursor-pointer";
+                repeatBadge.classList.add('hidden');
+            } else if (repeatMode === 1) {
+                btnRepeat.className = "text-magenta text-sm font-bold cursor-pointer";
+                repeatBadge.classList.add('hidden');
+            } else if (repeatMode === 2) {
+                btnRepeat.className = "text-magenta text-sm font-bold cursor-pointer";
+                repeatBadge.classList.remove('hidden');
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds === undefined) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // --- 5. BÓC TÁCH LINK YOUTUBE SIÊU TỐC ---
+        document.getElementById('btn-parse-link').addEventListener('click', () => {
+            const urlInput = document.getElementById('input-yt-url').value.trim();
+            if (!urlInput) return showCustomAlert('Vui lòng điền link hoặc ID YouTube!', 'fa-triangle-exclamation');
+
+            const videoIdRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|embed\/|\/v\/|shorts\/|^)([^& \n?#]{11})/;
+            const match = urlInput.match(videoIdRegex);
+
+            if (match && match[1]) {
+                const vidId = match[1];
+                if (!playlists[activePlaylistKey]) playlists[activePlaylistKey] = [];
+                
+                playlists[activePlaylistKey].push({ id: vidId, title: `Track Cloud [ID: ${vidId}]` });
+                showCustomAlert('Nạp liên kết thành công!', 'fa-circle-check', 'text-cyan-400');
+                document.getElementById('input-yt-url').value = '';
+                saveToStorage();
+                initPlaylistDropdown();
+                renderTracklistManager();
+            } else {
+                showCustomAlert('Cấu trúc link không hợp lệ!', 'fa-circle-xmark');
+            }
+        });
+
+        // --- 6. NAVIGATION CHUYỂN TAB ---
+        tabBtnPlayer.addEventListener('click', () => {
+            tabBtnPlayer.className = "px-3 py-1 text-xs font-semibold rounded bg-cyan text-gray-900 transition-all cursor-pointer";
+            tabBtnPlaylists.className = "px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer";
+            viewPlayer.classList.remove('hidden');
+            viewPlaylists.classList.add('hidden');
+        });
+
+        tabBtnPlaylists.addEventListener('click', () => {
+            tabBtnPlaylists.className = "px-3 py-1 text-xs font-semibold rounded bg-magenta text-white transition-all cursor-pointer";
+            tabBtnPlayer.className = "px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer";
+            viewPlaylists.classList.remove('hidden');
+            viewPlayer.classList.add('hidden');
+            renderTracklistManager();
+        });
+
+        function saveToStorage() {
+            localStorage.setItem('pcn_playlists', JSON.stringify(playlists));
+            localStorage.setItem('pcn_active_playlist_key', activePlaylistKey);
+        }
+
+        function initPlaylistDropdown() {
+            selectPlaylist.innerHTML = '';
+            Object.keys(playlists).forEach(key => {
+                const opt = document.createElement('option');
+                opt.value = key; opt.textContent = key;
+                opt.selected = (key === activePlaylistKey);
+                selectPlaylist.appendChild(opt);
+            });
+            currentPlaylistName.textContent = activePlaylistKey;
+        }
+
+        selectPlaylist.addEventListener('change', (e) => {
+            activePlaylistKey = e.target.value;
+            currentTrackIndex = 0;
+            saveToStorage();
+            currentPlaylistName.textContent = activePlaylistKey;
+            renderTracklistManager();
+            loadTrack(currentTrackIndex, isPlaying);
+        });
+
+        function renderTracklistManager() {
+            trackListBox.innerHTML = '';
+            const tracks = playlists[activePlaylistKey] || [];
+            document.getElementById('tracklist-count').textContent = `Bài hát (${tracks.length})`;
+            
+            tracks.forEach((track, idx) => {
+                const item = document.createElement('div');
+                item.className = `flex justify-between items-center p-2 rounded text-xs transition-all cursor-pointer mb-1 ${idx === currentTrackIndex ? 'active-row text-cyan-400 font-bold' : 'bg-gray-950/40 text-gray-400 hover:bg-gray-900/60'}`;
+                
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-track-btn')) return;
+                    loadTrack(idx, true);
+                    renderTracklistManager();
+                });
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 truncate flex-1">
+                        <span class="font-mono text-[10px] text-gray-600">${idx + 1}</span>
+                        <p class="truncate">${track.title}</p>
+                    </div>
+                    <button class="delete-track-btn text-gray-600 hover:text-red-400 px-1 ml-2 cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+
+                item.querySelector('.delete-track-btn').addEventListener('click', () => {
+                    tracks.splice(idx, 1);
+                    playlists[activePlaylistKey] = tracks;
+                    saveToStorage();
+                    renderTracklistManager();
+                    if (currentTrackIndex >= tracks.length) currentTrackIndex = Math.max(0, tracks.length - 1);
+                });
+                trackListBox.appendChild(item);
+            });
+        }
+
+        // MODAL CONFIGS
+        document.getElementById('btn-create-playlist').addEventListener('click', () => {
+            document.getElementById('input-playlist-name').value = '';
+            modalCreate.classList.remove('hidden');
+        });
+        document.getElementById('btn-create-cancel').addEventListener('click', () => modalCreate.classList.add('hidden'));
+        document.getElementById('btn-create-confirm').addEventListener('click', () => {
+            const name = document.getElementById('input-playlist-name').value.trim();
+            if (name) {
+                if (playlists[name]) return showCustomAlert('Tên playlist đã tồn tại!');
+                playlists[name] = []; activePlaylistKey = name;
+                saveToStorage(); initPlaylistDropdown(); renderTracklistManager();
+                modalCreate.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('btn-export').addEventListener('click', () => {
+            const dataStr = JSON.stringify({ playlistName: activePlaylistKey, tracks: playlists[activePlaylistKey] || [] });
+            navigator.clipboard.writeText(dataStr).then(() => {
+                showCustomAlert('Đã copy mã cấu hình JSON!', 'fa-circle-check', 'text-cyan-400');
+            });
+        });
+
+        document.getElementById('btn-import').addEventListener('click', () => modalImport.classList.remove('hidden'));
+        document.getElementById('btn-modal-cancel').addEventListener('click', () => modalImport.classList.add('hidden'));
+        document.getElementById('btn-modal-confirm').addEventListener('click', () => {
+            const jsonText = document.getElementById('textarea-import-json').value.trim();
+            try {
+                const parsed = JSON.parse(jsonText);
+                if (parsed.playlistName && Array.isArray(parsed.tracks)) {
+                    playlists[parsed.playlistName] = parsed.tracks;
+                    activePlaylistKey = parsed.playlistName;
+                    saveToStorage(); initPlaylistDropdown(); renderTracklistManager();
+                    modalImport.classList.add('hidden');
+                    document.getElementById('textarea-import-json').value = '';
+                    loadTrack(0, false);
+                    showCustomAlert('Đồng bộ JSON hoàn tất!', 'fa-circle-check', 'text-cyan-400');
+                }
+            } catch(e) { showCustomAlert('Lỗi cú pháp JSON!', 'fa-circle-xmark'); }
+        });
+    </script>
 </body>
 </html>
