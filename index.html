@@ -44,24 +44,11 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #111827; }
         ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-        
-        /* Giấu Iframe YouTube một cách tinh tế để tránh lỗi ngắt tiến trình phát */
-        #yt-hidden-wrapper {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            opacity: 0;
-        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-start min-h-screen p-2 sm:p-4 selection:bg-cyan-500/30">
 
-    <div id="yt-hidden-wrapper">
-        <div id="yt-player-node"></div>
-    </div>
+    <audio id="pcn-audio-core" class="hidden" preload="auto"></audio>
 
     <main class="w-full max-w-md h-[620px] portal-panel rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto border border-gray-800">
         
@@ -99,7 +86,7 @@
 
             <div class="text-center w-full px-4 shrink-0">
                 <h2 id="player-track-title" class="text-sm font-semibold text-white truncate">Chưa nạp bài hát</h2>
-                <p id="player-track-status" class="text-xs text-gray-400 mt-1">Đang sẵn sàng kết nối Cloud</p>
+                <p id="player-track-status" class="text-xs text-gray-400 mt-1">Sẵn sàng</p>
             </div>
 
             <div class="w-full px-2 shrink-0 mt-4">
@@ -195,19 +182,17 @@
         </div>
     </div>
 
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <script>
-        // --- 1. ĐĂNG KÝ SERVICE WORKER (BẮT BUỘC CHO PWA) ---
+        // --- 1. REGISTER PWA SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('PWA Service Worker registered successfully!', reg.scope))
-                    .catch(err => console.log('Service Worker registration failed:', err));
+                    .then(reg => console.log('PWA Connected:', reg.scope))
+                    .catch(err => console.log('PWA Offline Shield Failed:', err));
             });
         }
 
-        // --- 2. CƠ SỞ DỮ LIỆU ĐỒNG BỘ LOCALSTORAGE ---
+        // --- 2. DATA STORAGE MANAGEMENT ---
         const DEFAULT_PLAYLISTS = {
             "🔥 Nhạc Hot Cloud": [
                 { id: "M0R_tVqfJIE", title: "Sơn Tùng M-TP - Đừng Làm Trái Tim Anh Đau" },
@@ -225,9 +210,10 @@
         let currentTrackIndex = 0;
         let isPlaying = false;
         let isShuffle = false;
-        let repeatMode = 0; // 0: Không lặp, 1: Lặp danh sách, 2: Lặp 1 bài
-        let ytPlayer = null;
-        let progressInterval = null;
+        let repeatMode = 0; 
+
+        // Core Player Engine
+        const audioPlayer = document.getElementById('pcn-audio-core');
 
         // UI Selectors
         const tabBtnPlayer = document.getElementById('tab-btn-player');
@@ -260,132 +246,94 @@
         }
         document.getElementById('btn-alert-close').addEventListener('click', () => modalAlert.classList.add('hidden'));
 
-        // --- 3. ĐIỀU HƯỚNG SỰ KIỆN IFRAME API GOOGLE (Không dính lỗi 153 khi ở Web HTTPS) ---
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('yt-player-node', {
-                height: '200',
-                width: '200',
-                videoId: '',
-                playerVars: {
-                    'autoplay': 0,
-                    'controls': 0,
-                    'disablekb': 1,
-                    'fs': 0,
-                    'rel': 0,
-                    'modestbranding': 1,
-                    'enablejsapi': 1,
-                    'origin': window.location.origin
-                },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange,
-                    'onError': onPlayerError
-                }
-            });
-        }
-
-        function onPlayerReady(event) {
-            initPlaylistDropdown();
-            loadTrack(currentTrackIndex, false);
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data == YT.PlayerState.PLAYING) {
-                isPlaying = true;
-                btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
-                playerTrackStatus.textContent = "Đang phát ổn định từ YouTube Cloud";
-                visualizerDisk.classList.add('spinning');
-                startProgressTracker();
-            } 
-            else if (event.data == YT.PlayerState.PAUSED) {
-                isPlaying = false;
-                btnPlayPause.innerHTML = `<i class="fa-solid fa-play ml-0.5"></i>`;
-                playerTrackStatus.textContent = "Đang tạm dừng";
-                visualizerDisk.classList.remove('spinning');
-                stopProgressTracker();
-            } 
-            else if (event.data == YT.PlayerState.ENDED) {
-                stopProgressTracker();
-                handleTrackEnded();
-            }
-        }
-
-        function onPlayerError(event) {
-            console.error("YouTube Core Error Code:", event.data);
-            playerTrackStatus.textContent = "Bản quyền chặn phát! Đang chuyển tiếp...";
-            setTimeout(() => triggerNextTrack(), 2000);
-        }
-
-        // --- 4. ENGINE ĐIỀU KHIỂN NHẠC ---
+        // --- 3. HIGH-SPEED STREAM ENGINE (Bypass Error 150) ---
         function loadTrack(index, autoPlay = false) {
             const tracks = playlists[activePlaylistKey] || [];
             if (tracks.length === 0) {
                 playerTrackTitle.textContent = "Không có bài hát";
-                playerTrackStatus.textContent = "Vui lòng nạp thêm bài hát mới";
+                playerTrackStatus.textContent = "Vui lòng nạp thêm track mới";
+                audioPlayer.src = "";
                 return;
             }
 
             currentTrackIndex = index;
             const track = tracks[index];
             playerTrackTitle.textContent = track.title;
-            playerTrackStatus.textContent = "Đang đồng bộ luồng Cloud...";
+            playerTrackStatus.textContent = "Đang kết nối Cloud Stream...";
 
-            if (ytPlayer && ytPlayer.cueVideoById) {
-                if (autoPlay) {
-                    ytPlayer.loadVideoById(track.id);
-                    isPlaying = true;
-                } else {
-                    ytPlayer.cueVideoById(track.id);
-                    isPlaying = false;
-                }
+            // Sử dụng Proxy phân phối kết hợp Invidious node gốc chuyên dụng cho PWA HTTPS
+            // Phương pháp này lách qua lớp kiểm tra quyền nhúng của YouTube, đọc thẳng file audio (.m4a/.webm)
+            audioPlayer.src = `https://api.allorigins.win/raw?url=https://invidious.io.lol/latest_version?id=${track.id}&itag=140`;
+            audioPlayer.load();
+
+            if (autoPlay) {
+                playAudio();
+            } else {
+                pauseAudio();
             }
             updatePlayerControlsUI();
         }
 
+        function playAudio() {
+            if (!audioPlayer.src) return;
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+                playerTrackStatus.textContent = "Đang phát mượt mà";
+                visualizerDisk.classList.add('spinning');
+            }).catch(e => {
+                // Node dự phòng 2 chạy trực tiếp cấu trúc không qua proxy
+                const currentTrack = playlists[activePlaylistKey][currentTrackIndex];
+                if(currentTrack) {
+                    audioPlayer.src = `https://invidious.asir.top/latest_version?id=${currentTrack.id}&itag=140`;
+                    audioPlayer.play().then(() => {
+                        isPlaying = true;
+                        btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
+                        playerTrackStatus.textContent = "Đang phát (Cụm dự phòng Cloud)";
+                        visualizerDisk.classList.add('spinning');
+                    }).catch(err => {
+                        playerTrackStatus.textContent = "Luồng bị nghẽn. Tự động chuyển bài...";
+                        setTimeout(() => triggerNextTrack(), 1500);
+                    });
+                }
+            });
+        }
+
+        function pauseAudio() {
+            audioPlayer.pause();
+            isPlaying = false;
+            btnPlayPause.innerHTML = `<i class="fa-solid fa-play ml-0.5"></i>`;
+            playerTrackStatus.textContent = "Đang tạm dừng";
+            visualizerDisk.classList.remove('spinning');
+        }
+
         btnPlayPause.addEventListener('click', () => {
-            if (!ytPlayer) return;
-            if (isPlaying) {
-                ytPlayer.pauseVideo();
-            } else {
-                ytPlayer.playVideo();
-            }
+            if (isPlaying) pauseAudio(); else playAudio();
         });
 
-        function startProgressTracker() {
-            stopProgressTracker();
-            progressInterval = setInterval(() => {
-                if (ytPlayer && ytPlayer.getCurrentTime) {
-                    const current = ytPlayer.getCurrentTime();
-                    const total = ytPlayer.getDuration();
-                    if (total > 0) {
-                        const pct = (current / total) * 100;
-                        progressBar.value = pct;
-                        timeCurrent.textContent = formatTime(current);
-                        timeTotal.textContent = formatTime(total);
-                    }
-                }
-            }, 500);
-        }
-
-        function stopProgressTracker() {
-            if (progressInterval) clearInterval(progressInterval);
-        }
+        // PROGRESS TRACKER FOR AUDIO NODE
+        audioPlayer.addEventListener('timeupdate', () => {
+            if (audioPlayer.duration) {
+                const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.value = pct;
+                timeCurrent.textContent = formatTime(audioPlayer.currentTime);
+                timeTotal.textContent = formatTime(audioPlayer.duration);
+            }
+        });
 
         progressBar.addEventListener('input', (e) => {
-            if (ytPlayer && ytPlayer.getDuration) {
-                const total = ytPlayer.getDuration();
-                const newTime = (e.target.value / 100) * total;
-                ytPlayer.seekTo(newTime, true);
+            if (audioPlayer.duration) {
+                audioPlayer.currentTime = (e.target.value / 100) * audioPlayer.duration;
             }
         });
 
-        function handleTrackEnded() {
+        audioPlayer.addEventListener('ended', () => {
             if (repeatMode === 2) {
                 loadTrack(currentTrackIndex, true);
             } else {
                 triggerNextTrack();
             }
-        }
+        });
 
         btnNext.addEventListener('click', () => triggerNextTrack());
         btnPrev.addEventListener('click', () => {
@@ -441,7 +389,7 @@
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        // --- 5. BÓC TÁCH LINK YOUTUBE SIÊU TỐC ---
+        // --- 4. PARSE LINK YOUTUBE ---
         document.getElementById('btn-parse-link').addEventListener('click', () => {
             const urlInput = document.getElementById('input-yt-url').value.trim();
             if (!urlInput) return showCustomAlert('Vui lòng điền link hoặc ID YouTube!', 'fa-triangle-exclamation');
@@ -453,18 +401,18 @@
                 const vidId = match[1];
                 if (!playlists[activePlaylistKey]) playlists[activePlaylistKey] = [];
                 
-                playlists[activePlaylistKey].push({ id: vidId, title: `Track Cloud [ID: ${vidId}]` });
-                showCustomAlert('Nạp liên kết thành công!', 'fa-circle-check', 'text-cyan-400');
+                playlists[activePlaylistKey].push({ id: vidId, title: `Cloud Track [ID: ${vidId}]` });
+                showCustomAlert('Nạp track thành công!', 'fa-circle-check', 'text-cyan-400');
                 document.getElementById('input-yt-url').value = '';
                 saveToStorage();
                 initPlaylistDropdown();
                 renderTracklistManager();
             } else {
-                showCustomAlert('Cấu trúc link không hợp lệ!', 'fa-circle-xmark');
+                showCustomAlert('Link YouTube không hợp lệ!', 'fa-circle-xmark');
             }
         });
 
-        // --- 6. NAVIGATION CHUYỂN TAB ---
+        // --- 5. TABS & OVERLAYS ---
         tabBtnPlayer.addEventListener('click', () => {
             tabBtnPlayer.className = "px-3 py-1 text-xs font-semibold rounded bg-cyan text-gray-900 transition-all cursor-pointer";
             tabBtnPlaylists.className = "px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer";
@@ -539,7 +487,7 @@
             });
         }
 
-        // MODAL CONFIGS
+        // MODALS EXECUTION
         document.getElementById('btn-create-playlist').addEventListener('click', () => {
             document.getElementById('input-playlist-name').value = '';
             modalCreate.classList.remove('hidden');
@@ -575,10 +523,14 @@
                     modalImport.classList.add('hidden');
                     document.getElementById('textarea-import-json').value = '';
                     loadTrack(0, false);
-                    showCustomAlert('Đồng bộ JSON hoàn tất!', 'fa-circle-check', 'text-cyan-400');
+                    showCustomAlert('Đồng bộ JSON thành công!', 'fa-circle-check', 'text-cyan-400');
                 }
-            } catch(e) { showCustomAlert('Lỗi cú pháp JSON!', 'fa-circle-xmark'); }
+            } catch(e) { showCustomAlert('Cú pháp JSON không chuẩn!', 'fa-circle-xmark'); }
         });
+
+        // INITIALIZE APP
+        initPlaylistDropdown();
+        loadTrack(currentTrackIndex, false);
     </script>
 </body>
 </html>
