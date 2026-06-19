@@ -1,12 +1,13 @@
-const CACHE_NAME = 'drivecompanion-v2.1'; // Đổi tên version để ép trình duyệt xóa cache cũ
+const CACHE_NAME = 'drivecompanion-v3'; // Tăng version để ép trình duyệt dọn sạch rác cũ
 const ASSETS = [
+  './',
   'index.html',
   'manifest.json',
   'icon-192.png',
   'icon-512.png'
 ];
 
-// Cài đặt Service Worker và lưu cache cơ bản
+// 1. Cài đặt và ép cache file tĩnh của hệ thống app
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,7 +16,7 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Xóa bỏ các Cache cũ để tránh xung đột code
+// 2. Kích hoạt và dọn sạch bách các ổ cache cũ lỗi thời
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -30,23 +31,28 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Chiến thuật Network-First: Ưu tiên mạng, lỗi mạng mới dùng Cache
+// 3. Luồng Fetch an toàn: Chỉ cache những file tĩnh thuộc nội bộ app, còn lại cho đi thẳng ra mạng
 self.addEventListener('fetch', (e) => {
-  // Không cache các request gọi tới Youtube API
-  if (e.request.url.includes('youtube.com') || e.request.url.includes('ytimg.com')) {
-    return;
+  // Bỏ qua hoàn toàn, không can thiệp vào request của YouTube hoặc các bên thứ ba
+  if (!e.request.url.startsWith(self.location.origin)) {
+    return; 
   }
-  
+
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        // Lưu bản mới nhất vào cache để thủ sẵn
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, resClone);
-        });
+        // Chỉ lưu cache nếu request thành công và là file nội bộ sạch
+        if (res.status === 200 && e.request.method === 'GET') {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(e.request, resClone);
+          });
+        }
         return res;
       })
-      .catch(() => caches.match(e.request)) // Mất mạng thì lấy trong cache ra
+      .catch(() => {
+        // Mất mạng hoàn toàn thì lôi file tĩnh trong cache ra cứu cánh
+        return caches.match(e.request);
+      })
   );
 });
