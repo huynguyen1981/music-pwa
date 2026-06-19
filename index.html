@@ -1,536 +1,442 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DriveCompanion - PCN Music Hub</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b0f19">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon-192.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriveCompanion - Pro Music Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ==========================================================================
+       VARIABLES & BASE STYLES
+       ========================================================================== */
+    :root {
+      --bg-main: #0B0E14;
+      --bg-card: #161A23;
+      --bg-accent: #1ED760; /* Spotify Green */
+      --text-main: #FFFFFF;
+      --text-muted: #8E9AA8;
+      --border-radius: 24px;
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #030406;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-main);
+    }
+
+    /* ==========================================================================
+       APP CONTAINER (MOBILE-FIRST)
+       ========================================================================== */
+    .music-app {
+      background-color: var(--bg-main);
+      width: 100%;
+      max-width: 412px;
+      height: 844px;
+      border-radius: 40px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 8px solid #222;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Hidden YouTube Player Wrapper */
+    .youtube-wrapper {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Header */
+    .app-header {
+      padding: 24px 24px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .app-header i {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .app-header span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+
+    /* Player Body Content */
+    .player-body {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 32px;
+    }
+
+    /* Artwork with Glow effect when Playing */
+    .artwork-wrapper {
+      position: relative;
+      width: 280px;
+      height: 280px;
+      margin-bottom: 32px;
+    }
+    .artwork-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--border-radius);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      transition: var(--transition);
+    }
+    .artwork-wrapper.playing .artwork-img {
+      transform: scale(1.02);
+    }
+    .artwork-wrapper.playing::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--border-radius);
+      box-shadow: 0 0 35px rgba(30, 215, 96, 0.4);
+      z-index: -1;
+    }
+
+    /* Track Metadata */
+    .track-info {
+      text-align: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+    .track-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-artist {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    /* Progress Timeline */
+    .progress-container {
+      width: 100%;
+      margin-bottom: 32px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #262D3B;
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+    .progress-current {
+      width: 0%;
+      height: 100%;
+      background-color: var(--bg-accent);
+      border-radius: 3px;
+      transition: width 0.1s linear;
+    }
+    .progress-time {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Media Core Controls */
+    .main-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 0 16px;
+      margin-bottom: 24px;
+    }
+    .btn-secondary {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-secondary:hover { color: var(--text-main); }
     
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        body {
-            background-color: #0b0f19;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-        .portal-panel {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-        }
-        .accent-cyan { color: #06b6d4; }
-        .bg-cyan { background-color: #06b6d4; }
-        .accent-magenta { color: #d946ef; }
-        .bg-magenta { background-color: #d946ef; }
-        .active-row {
-            background-color: rgba(6, 182, 212, 0.1);
-            border-left: 4px solid #06b6d4;
-        }
-        .neon-glow {
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
-        }
-        .spinning {
-            animation: spin 12s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #111827; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
-    </style>
+    .btn-primary {
+      background-color: var(--text-main);
+      border: none;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.6rem;
+      color: var(--bg-main);
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+    }
+    .btn-primary:hover {
+      transform: scale(1.05);
+      background-color: var(--bg-accent);
+      color: var(--bg-main);
+    }
+
+    /* ==========================================================================
+       BOTTOM SHEET (PRO FEATURING - FIXED & FULL ENGLISH)
+       ========================================================================== */
+    .bottom-sheet {
+      background-color: var(--bg-card);
+      border-top-left-radius: 32px;
+      border-top-right-radius: 32px;
+      padding: 16px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sheet-handle {
+      width: 40px;
+      height: 4px;
+      background-color: #384252;
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+    .toolbar-features {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+    }
+    .feature-item i {
+      font-size: 1.2rem;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #1F2431;
+      border-radius: 50%;
+      color: var(--text-main);
+      transition: var(--transition);
+    }
+    .feature-item:hover i {
+      background-color: var(--bg-accent);
+      color: var(--bg-main);
+    }
+
+    /* Responsive Guard */
+    @media (min-width: 768px) {
+      .music-app { border: 8px solid #222; }
+    }
+  </style>
 </head>
-<body class="flex flex-col items-center justify-start min-h-screen p-2 sm:p-4 selection:bg-cyan-500/30">
+<body>
 
-    <audio id="pcn-audio-core" class="hidden" preload="auto"></audio>
-
-    <main class="w-full max-w-md h-[620px] portal-panel rounded-xl shadow-2xl overflow-hidden flex flex-col my-auto border border-gray-800">
-        
-        <header class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 shrink-0">
-            <div>
-                <h1 class="text-sm font-bold tracking-wider text-gray-200 uppercase flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-magenta animate-pulse"></span>
-                    DriveCompanion
-                </h1>
-                <p class="text-xs text-gray-400 mt-0.5">OKC NODE: PWA Cloud — Connected</p>
-            </div>
-            <div class="flex gap-2">
-                <button id="tab-btn-player" class="px-3 py-1 text-xs font-semibold rounded bg-cyan text-gray-900 transition-all cursor-pointer">Player</button>
-                <button id="tab-btn-playlists" class="px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer">Playlists</button>
-            </div>
-        </header>
-
-        <section id="view-player" class="p-6 flex flex-col justify-between flex-1 overflow-y-auto">
-            <div class="text-center w-full shrink-0">
-                <span class="text-[10px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Current Playlist</span>
-                <span id="current-playlist-name" class="text-sm font-medium text-cyan-400 border border-cyan-500/30 px-2.5 py-0.5 rounded-full bg-cyan-950/30">Loading...</span>
-            </div>
-
-            <div class="flex justify-center items-center my-auto shrink-0 py-4">
-                <div id="visualizer-disk" class="w-48 h-48 rounded-full bg-gradient-to-tr from-gray-950 via-gray-800 to-gray-950 border-4 border-gray-800 flex items-center justify-center relative neon-glow">
-                    <div class="absolute inset-3 rounded-full border border-dashed border-cyan-500/20"></div>
-                    <div class="absolute inset-8 rounded-full border border-gray-900"></div>
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 to-magenta flex items-center justify-center p-1 shadow-lg">
-                        <div class="w-full h-full rounded-full bg-gray-900 flex items-center justify-center">
-                            <div class="w-3 h-3 rounded-full bg-cyan shadow-sm"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center w-full px-4 shrink-0">
-                <h2 id="player-track-title" class="text-sm font-semibold text-white truncate">Chưa nạp bài hát</h2>
-                <p id="player-track-status" class="text-xs text-gray-400 mt-1">Sẵn sàng</p>
-            </div>
-
-            <div class="w-full px-2 shrink-0 mt-4">
-                <div class="flex justify-between text-[10px] text-gray-500 font-mono mb-1">
-                    <span id="time-current">0:00</span>
-                    <span id="time-total">0:00</span>
-                </div>
-                <input type="range" id="progress-bar" min="0" max="100" value="0" class="w-full accent-cyan bg-gray-800 h-1 rounded-lg cursor-pointer">
-            </div>
-
-            <div class="flex items-center justify-center gap-6 w-full shrink-0 mt-4">
-                <button id="btn-shuffle" class="text-gray-500 hover:text-gray-300 transition-colors text-sm cursor-pointer" title="Bật trộn bài">
-                    <i class="fa-solid fa-shuffle"></i>
-                </button>
-                <button id="btn-prev" class="text-gray-400 hover:text-cyan-400 transition-colors text-xl cursor-pointer">
-                    <i class="fa-solid fa-backward-step"></i>
-                </button>
-                <button id="btn-play-pause" class="w-12 h-12 rounded-full bg-cyan text-gray-900 flex items-center justify-center text-lg hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20 cursor-pointer">
-                    <i class="fa-solid fa-play ml-0.5"></i>
-                </button>
-                <button id="btn-next" class="text-gray-400 hover:text-cyan-400 transition-colors text-xl cursor-pointer">
-                    <i class="fa-solid fa-forward-step"></i>
-                </button>
-                <button id="btn-repeat" class="text-gray-500 hover:text-gray-300 transition-colors text-sm relative cursor-pointer" title="Lặp danh sách">
-                    <i class="fa-solid fa-repeat"></i>
-                    <span id="repeat-badge" class="absolute -top-2 -right-2 text-[8px] bg-magenta text-white px-1 rounded-full hidden">1</span>
-                </button>
-            </div>
-        </section>
-
-        <section id="view-playlists" class="p-4 flex flex-col justify-between flex-1 hidden overflow-hidden">
-            <div class="flex flex-col space-y-3 flex-1 overflow-y-auto pr-0.5 mb-2">
-                <div class="p-3 bg-gray-900 rounded-lg border border-gray-800 shrink-0">
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-cyan-400 mb-1.5">Dán Link YouTube (Video, Short, Hoặc ID)</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="input-yt-url" placeholder="https://www.youtube.com/watch?v=..." class="flex-1 bg-gray-950 border border-gray-800 rounded px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500">
-                        <button id="btn-parse-link" class="bg-cyan hover:bg-cyan-400 text-gray-900 px-3 py-1.5 rounded text-xs font-bold transition-all shrink-0 cursor-pointer">Nạp Track</button>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2 shrink-0">
-                    <div class="flex justify-between items-center">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-magenta">Danh Sách Playlist</label>
-                        <button id="btn-create-playlist" class="text-[11px] text-cyan-400 hover:underline cursor-pointer"><i class="fa-solid fa-plus mr-1"></i>Tạo mới</button>
-                    </div>
-                    <select id="select-playlist" class="w-full bg-gray-950 border border-gray-800 rounded px-2 py-2 text-xs text-white focus:outline-none focus:border-magenta-500"></select>
-                </div>
-
-                <div class="flex flex-col flex-1 min-h-0">
-                    <div class="flex justify-between items-center mb-1.5 shrink-0">
-                        <span class="text-xs text-gray-400 font-semibold" id="tracklist-count">Bài hát (0)</span>
-                        <div class="flex gap-2">
-                            <button id="btn-export" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-300 cursor-pointer"><i class="fa-solid fa-download mr-1"></i>Export</button>
-                            <button id="btn-import" class="text-[10px] bg-gray-800 hover:bg-gray-700 px-2 py-1 rounded text-gray-300 cursor-pointer"><i class="fa-solid fa-upload mr-1"></i>Import</button>
-                        </div>
-                    </div>
-                    <div id="track-list-box" class="space-y-1 overflow-y-auto flex-1 border border-gray-900 p-1 rounded bg-gray-950/20"></div>
-                </div>
-            </div>
-        </section>
-
-        <footer class="p-2 bg-gray-950 border-t border-gray-900 text-center text-[10px] text-gray-600 font-mono shrink-0">
-            PWA Core & Cloud Sync: <span class="text-green-500 font-bold">READY</span>
-        </footer>
-    </main>
-
-    <div id="modal-create" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-        <div class="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-2xl">
-            <h3 class="text-xs font-bold uppercase tracking-wide text-cyan-400 mb-3">Khởi tạo danh sách mới</h3>
-            <input type="text" id="input-playlist-name" placeholder="Tên playlist..." class="w-full bg-gray-950 border border-gray-800 rounded p-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 mb-4">
-            <div class="flex justify-end gap-2">
-                <button id="btn-create-cancel" class="px-3 py-1.5 bg-gray-800 text-gray-400 rounded text-xs cursor-pointer">Hủy</button>
-                <button id="btn-create-confirm" class="px-4 py-1.5 bg-cyan text-gray-900 font-bold rounded text-xs cursor-pointer">Tạo</button>
-            </div>
-        </div>
+  <div class="music-app">
+    <div class="youtube-wrapper">
+      <iframe id="youtube-player" 
+              src="https://www.youtube.com/embed/jfKfPfyJRdk?enablejsapi=1&playsinline=1&controls=0&disablekb=1" 
+              allow="autoplay; compute-pressure" 
+              style="border: none;">
+      </iframe>
     </div>
 
-    <div id="modal-alert" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="w-full max-w-xs bg-gray-900 border border-magenta/40 rounded-xl p-5 shadow-xl text-center">
-            <div id="alert-icon" class="text-magenta text-2xl mb-2"><i class="fa-solid fa-circle-info"></i></div>
-            <p id="alert-message" class="text-xs text-gray-300 font-medium mb-4 px-2">Thông báo</p>
-            <button id="btn-alert-close" class="px-5 py-1.5 bg-gray-800 text-white font-bold rounded text-xs cursor-pointer">Xác Nhận</button>
-        </div>
+    <div class="app-header">
+      <button class="btn-secondary"><i class="fa-solid fa-chevron-down"></i></button>
+      <span>DRIVE COMPANION</span>
+      <button class="btn-secondary"><i class="fa-solid fa-ellipsis"></i></button>
     </div>
 
-    <div id="modal-import" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
-        <div class="w-full max-w-sm bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-2xl">
-            <textarea id="textarea-import-json" rows="6" placeholder="Dán chuỗi cấu hình JSON vào đây..." class="w-full bg-gray-950 border border-gray-800 rounded p-2 text-xs text-white font-mono focus:outline-none focus:border-cyan-500 mb-3"></textarea>
-            <div class="flex justify-end gap-2">
-                <button id="btn-modal-cancel" class="px-3 py-1 bg-gray-800 text-gray-400 rounded text-xs cursor-pointer">Hủy</button>
-                <button id="btn-modal-confirm" class="px-3 py-1 bg-cyan text-gray-900 font-bold rounded text-xs cursor-pointer">Đồng bộ</button>
-            </div>
+    <div class="player-body">
+      <div class="artwork-wrapper" id="artwork-box">
+        <img class="artwork-img" src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500" alt="Track Cover">
+      </div>
+
+      <div class="track-info">
+        <h2 class="track-title" id="title-display">Loading track...</h2>
+        <p class="track-artist">YouTube Stream</p>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-timeline">
+          <div class="progress-current" id="progress-filled"></div>
         </div>
+        <div class="progress-time">
+          <span id="current-time">0:00</span>
+          <span id="duration">0:00</span>
+        </div>
+      </div>
+
+      <div class="main-controls">
+        <button class="btn-secondary"><i class="fa-solid fa-shuffle"></i></button>
+        <button class="btn-secondary"><i class="fa-solid fa-backward-step"></i></button>
+        <button class="btn-primary" id="play-trigger"><i class="fa-solid fa-play" id="play-icon"></i></button>
+        <button class="btn-secondary"><i class="fa-solid fa-forward-step"></i></button>
+        <button class="btn-secondary"><i class="fa-solid fa-repeat"></i></button>
+      </div>
     </div>
 
-    <script>
-        // --- 1. REGISTER PWA SERVICE WORKER ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('PWA Connected:', reg.scope))
-                    .catch(err => console.log('PWA Offline Shield Failed:', err));
-            });
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <div class="toolbar-features">
+        <div class="feature-item">
+          <i class="fa-solid fa-list-ul"></i>
+          <span>Queue</span>
+        </div>
+        <div class="feature-item">
+          <i class="fa-solid fa-heart"></i>
+          <span>Favorites</span>
+        </div>
+        <div class="feature-item">
+          <i class="fa-solid fa-car"></i>
+          <span>Drive Mode</span>
+        </div>
+        <div class="feature-item">
+          <i class="fa-solid fa-arrow-down-to-bracket"></i>
+          <span>Offline</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tải script API chính chủ của Youtube
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    var player;
+
+    // Hàm tự động chạy khi Youtube API sẵn sàng
+    function onYouTubeIframeAPIReady() {
+      // Khởi tạo Player trỏ thẳng vào Id của cái Iframe tĩnh đã có sẵn trong DOM
+      player = new YT.Player('youtube-player', {
+        events: {
+          'onReady': onPlayerReady,
+          'onStateChange': onPlayerStateChange
         }
+      });
+    }
 
-        // --- 2. DATA STORAGE MANAGEMENT ---
-        const DEFAULT_PLAYLISTS = {
-            "🔥 Nhạc Hot Cloud": [
-                { id: "M0R_tVqfJIE", title: "Sơn Tùng M-TP - Đừng Làm Trái Tim Anh Đau" },
-                { id: "aIOnLz96fio", title: "Soobin Hoàng Sơn - Giá Như" },
-                { id: "1v6L96277Fw", title: "HIEUTHUHAI - Không Thể Say" }
-            ],
-            "☕ Chill Out Lofi": [
-                { id: "jfKfPfyJRdk", title: "Lofi Girl - Synthwave Beats" },
-                { id: "TURM7reS_48", title: "Chillhop Radio Live" }
-            ]
-        };
+    const playTrigger = document.getElementById('play-trigger');
+    const playIcon = document.getElementById('play-icon');
+    const artworkBox = document.getElementById('artwork-box');
+    const titleDisplay = document.getElementById('title-display');
+    const progressFilled = document.getElementById('progress-filled');
+    const currentTimeText = document.getElementById('current-time');
+    const durationText = document.getElementById('duration');
+    const timeline = document.getElementById('progress-timeline');
+    let timer;
 
-        let playlists = JSON.parse(localStorage.getItem('pcn_playlists')) || DEFAULT_PLAYLISTS;
-        let activePlaylistKey = localStorage.getItem('pcn_active_playlist_key') || Object.keys(playlists)[0];
-        let currentTrackIndex = 0;
-        let isPlaying = false;
-        let isShuffle = false;
-        let repeatMode = 0; 
+    function onPlayerReady(event) {
+      // Đọc metadata trực tiếp từ Iframe để hiển thị
+      if(player && typeof player.getVideoData === 'function') {
+        titleDisplay.innerText = player.getVideoData().title || "Lofi Chill Track";
+        durationText.innerText = formatTime(player.getDuration());
+      }
+    }
 
-        // Core Player Engine
-        const audioPlayer = document.getElementById('pcn-audio-core');
+    function onPlayerStateChange(event) {
+      if (event.data == YT.PlayerState.PLAYING) {
+        playIcon.className = "fa-solid fa-pause";
+        artworkBox.classList.add('playing');
+        durationText.innerText = formatTime(player.getDuration());
+        startProgressLoop();
+      } else {
+        playIcon.className = "fa-solid fa-play";
+        artworkBox.classList.remove('playing');
+        clearInterval(timer);
+      }
+    }
 
-        // UI Selectors
-        const tabBtnPlayer = document.getElementById('tab-btn-player');
-        const tabBtnPlaylists = document.getElementById('tab-btn-playlists');
-        const viewPlayer = document.getElementById('view-player');
-        const viewPlaylists = document.getElementById('view-playlists');
-        const selectPlaylist = document.getElementById('select-playlist');
-        const trackListBox = document.getElementById('track-list-box');
-        const currentPlaylistName = document.getElementById('current-playlist-name');
-        const playerTrackTitle = document.getElementById('player-track-title');
-        const playerTrackStatus = document.getElementById('player-track-status');
-        const btnPlayPause = document.getElementById('btn-play-pause');
-        const btnPrev = document.getElementById('btn-prev');
-        const btnNext = document.getElementById('btn-next');
-        const btnShuffle = document.getElementById('btn-shuffle');
-        const btnRepeat = document.getElementById('btn-repeat');
-        const repeatBadge = document.getElementById('repeat-badge');
-        const progressBar = document.getElementById('progress-bar');
-        const timeCurrent = document.getElementById('time-current');
-        const timeTotal = document.getElementById('time-total');
-        const visualizerDisk = document.getElementById('visualizer-disk');
-        const modalCreate = document.getElementById('modal-create');
-        const modalAlert = document.getElementById('modal-alert');
-        const modalImport = document.getElementById('modal-import');
+    // Toggle Play/Pause dứt điểm - Đã check an toàn tránh lỗi "not a function"
+    playTrigger.addEventListener('click', () => {
+      if (!player || typeof player.getPlayerState !== 'function') {
+        console.log("YouTube Player is still initializing...");
+        return;
+      }
+      
+      const state = player.getPlayerState();
+      if (state == YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+    });
 
-        function showCustomAlert(msg, iconClass = "fa-circle-info", colorClass = "text-magenta") {
-            document.getElementById('alert-message').textContent = msg;
-            document.getElementById('alert-icon').innerHTML = `<i class="fa-solid ${iconClass} ${colorClass}"></i>`;
-            modalAlert.classList.remove('hidden');
+    // Xử lý Timeline Tracking
+    function startProgressLoop() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        if (!player || typeof player.getCurrentTime !== 'function') return;
+        const current = player.getCurrentTime();
+        const duration = player.getDuration();
+        if (duration > 0) {
+          const percentage = (current / duration) * 100;
+          progressFilled.style.width = percentage + "%";
+          currentTimeText.innerText = formatTime(current);
         }
-        document.getElementById('btn-alert-close').addEventListener('click', () => modalAlert.classList.add('hidden'));
+      }, 1000);
+    }
 
-        // --- 3. HIGH-SPEED STREAM ENGINE (Bypass Error 150) ---
-        function loadTrack(index, autoPlay = false) {
-            const tracks = playlists[activePlaylistKey] || [];
-            if (tracks.length === 0) {
-                playerTrackTitle.textContent = "Không có bài hát";
-                playerTrackStatus.textContent = "Vui lòng nạp thêm track mới";
-                audioPlayer.src = "";
-                return;
-            }
+    // Tua nhạc khi click vào thanh Progress Bar
+    timeline.addEventListener('click', (e) => {
+      if (!player || typeof player.seekTo !== 'function') return;
+      const rect = timeline.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      const duration = player.getDuration();
+      const seekToTime = (clickX / width) * duration;
+      player.seekTo(seekToTime, true);
+    });
 
-            currentTrackIndex = index;
-            const track = tracks[index];
-            playerTrackTitle.textContent = track.title;
-            playerTrackStatus.textContent = "Đang kết nối Cloud Stream...";
-
-            // Sử dụng Proxy phân phối kết hợp Invidious node gốc chuyên dụng cho PWA HTTPS
-            // Phương pháp này lách qua lớp kiểm tra quyền nhúng của YouTube, đọc thẳng file audio (.m4a/.webm)
-            audioPlayer.src = `https://api.allorigins.win/raw?url=https://invidious.io.lol/latest_version?id=${track.id}&itag=140`;
-            audioPlayer.load();
-
-            if (autoPlay) {
-                playAudio();
-            } else {
-                pauseAudio();
-            }
-            updatePlayerControlsUI();
-        }
-
-        function playAudio() {
-            if (!audioPlayer.src) return;
-            audioPlayer.play().then(() => {
-                isPlaying = true;
-                btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
-                playerTrackStatus.textContent = "Đang phát mượt mà";
-                visualizerDisk.classList.add('spinning');
-            }).catch(e => {
-                // Node dự phòng 2 chạy trực tiếp cấu trúc không qua proxy
-                const currentTrack = playlists[activePlaylistKey][currentTrackIndex];
-                if(currentTrack) {
-                    audioPlayer.src = `https://invidious.asir.top/latest_version?id=${currentTrack.id}&itag=140`;
-                    audioPlayer.play().then(() => {
-                        isPlaying = true;
-                        btnPlayPause.innerHTML = `<i class="fa-solid fa-pause"></i>`;
-                        playerTrackStatus.textContent = "Đang phát (Cụm dự phòng Cloud)";
-                        visualizerDisk.classList.add('spinning');
-                    }).catch(err => {
-                        playerTrackStatus.textContent = "Luồng bị nghẽn. Tự động chuyển bài...";
-                        setTimeout(() => triggerNextTrack(), 1500);
-                    });
-                }
-            });
-        }
-
-        function pauseAudio() {
-            audioPlayer.pause();
-            isPlaying = false;
-            btnPlayPause.innerHTML = `<i class="fa-solid fa-play ml-0.5"></i>`;
-            playerTrackStatus.textContent = "Đang tạm dừng";
-            visualizerDisk.classList.remove('spinning');
-        }
-
-        btnPlayPause.addEventListener('click', () => {
-            if (isPlaying) pauseAudio(); else playAudio();
-        });
-
-        // PROGRESS TRACKER FOR AUDIO NODE
-        audioPlayer.addEventListener('timeupdate', () => {
-            if (audioPlayer.duration) {
-                const pct = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-                progressBar.value = pct;
-                timeCurrent.textContent = formatTime(audioPlayer.currentTime);
-                timeTotal.textContent = formatTime(audioPlayer.duration);
-            }
-        });
-
-        progressBar.addEventListener('input', (e) => {
-            if (audioPlayer.duration) {
-                audioPlayer.currentTime = (e.target.value / 100) * audioPlayer.duration;
-            }
-        });
-
-        audioPlayer.addEventListener('ended', () => {
-            if (repeatMode === 2) {
-                loadTrack(currentTrackIndex, true);
-            } else {
-                triggerNextTrack();
-            }
-        });
-
-        btnNext.addEventListener('click', () => triggerNextTrack());
-        btnPrev.addEventListener('click', () => {
-            const tracks = playlists[activePlaylistKey] || [];
-            if (tracks.length === 0) return;
-            if (isShuffle) {
-                currentTrackIndex = Math.floor(Math.random() * tracks.length);
-            } else {
-                currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
-            }
-            loadTrack(currentTrackIndex, true);
-        });
-
-        function triggerNextTrack() {
-            const tracks = playlists[activePlaylistKey] || [];
-            if (tracks.length === 0) return;
-            if (isShuffle) {
-                currentTrackIndex = Math.floor(Math.random() * tracks.length);
-            } else {
-                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-            }
-            loadTrack(currentTrackIndex, true);
-        }
-
-        btnShuffle.addEventListener('click', () => {
-            isShuffle = !isShuffle;
-            updatePlayerControlsUI();
-        });
-
-        btnRepeat.addEventListener('click', () => {
-            repeatMode = (repeatMode + 1) % 3;
-            updatePlayerControlsUI();
-        });
-
-        function updatePlayerControlsUI() {
-            btnShuffle.className = isShuffle ? "text-cyan-400 text-sm font-bold cursor-pointer" : "text-gray-500 text-sm cursor-pointer";
-            if (repeatMode === 0) {
-                btnRepeat.className = "text-gray-500 text-sm cursor-pointer";
-                repeatBadge.classList.add('hidden');
-            } else if (repeatMode === 1) {
-                btnRepeat.className = "text-magenta text-sm font-bold cursor-pointer";
-                repeatBadge.classList.add('hidden');
-            } else if (repeatMode === 2) {
-                btnRepeat.className = "text-magenta text-sm font-bold cursor-pointer";
-                repeatBadge.classList.remove('hidden');
-            }
-        }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds === undefined) return "0:00";
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-
-        // --- 4. PARSE LINK YOUTUBE ---
-        document.getElementById('btn-parse-link').addEventListener('click', () => {
-            const urlInput = document.getElementById('input-yt-url').value.trim();
-            if (!urlInput) return showCustomAlert('Vui lòng điền link hoặc ID YouTube!', 'fa-triangle-exclamation');
-
-            const videoIdRegex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|embed\/|\/v\/|shorts\/|^)([^& \n?#]{11})/;
-            const match = urlInput.match(videoIdRegex);
-
-            if (match && match[1]) {
-                const vidId = match[1];
-                if (!playlists[activePlaylistKey]) playlists[activePlaylistKey] = [];
-                
-                playlists[activePlaylistKey].push({ id: vidId, title: `Cloud Track [ID: ${vidId}]` });
-                showCustomAlert('Nạp track thành công!', 'fa-circle-check', 'text-cyan-400');
-                document.getElementById('input-yt-url').value = '';
-                saveToStorage();
-                initPlaylistDropdown();
-                renderTracklistManager();
-            } else {
-                showCustomAlert('Link YouTube không hợp lệ!', 'fa-circle-xmark');
-            }
-        });
-
-        // --- 5. TABS & OVERLAYS ---
-        tabBtnPlayer.addEventListener('click', () => {
-            tabBtnPlayer.className = "px-3 py-1 text-xs font-semibold rounded bg-cyan text-gray-900 transition-all cursor-pointer";
-            tabBtnPlaylists.className = "px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer";
-            viewPlayer.classList.remove('hidden');
-            viewPlaylists.classList.add('hidden');
-        });
-
-        tabBtnPlaylists.addEventListener('click', () => {
-            tabBtnPlaylists.className = "px-3 py-1 text-xs font-semibold rounded bg-magenta text-white transition-all cursor-pointer";
-            tabBtnPlayer.className = "px-3 py-1 text-xs font-semibold rounded bg-gray-800 text-gray-400 hover:text-white transition-all cursor-pointer";
-            viewPlaylists.classList.remove('hidden');
-            viewPlayer.classList.add('hidden');
-            renderTracklistManager();
-        });
-
-        function saveToStorage() {
-            localStorage.setItem('pcn_playlists', JSON.stringify(playlists));
-            localStorage.setItem('pcn_active_playlist_key', activePlaylistKey);
-        }
-
-        function initPlaylistDropdown() {
-            selectPlaylist.innerHTML = '';
-            Object.keys(playlists).forEach(key => {
-                const opt = document.createElement('option');
-                opt.value = key; opt.textContent = key;
-                opt.selected = (key === activePlaylistKey);
-                selectPlaylist.appendChild(opt);
-            });
-            currentPlaylistName.textContent = activePlaylistKey;
-        }
-
-        selectPlaylist.addEventListener('change', (e) => {
-            activePlaylistKey = e.target.value;
-            currentTrackIndex = 0;
-            saveToStorage();
-            currentPlaylistName.textContent = activePlaylistKey;
-            renderTracklistManager();
-            loadTrack(currentTrackIndex, isPlaying);
-        });
-
-        function renderTracklistManager() {
-            trackListBox.innerHTML = '';
-            const tracks = playlists[activePlaylistKey] || [];
-            document.getElementById('tracklist-count').textContent = `Bài hát (${tracks.length})`;
-            
-            tracks.forEach((track, idx) => {
-                const item = document.createElement('div');
-                item.className = `flex justify-between items-center p-2 rounded text-xs transition-all cursor-pointer mb-1 ${idx === currentTrackIndex ? 'active-row text-cyan-400 font-bold' : 'bg-gray-950/40 text-gray-400 hover:bg-gray-900/60'}`;
-                
-                item.addEventListener('click', (e) => {
-                    if (e.target.closest('.delete-track-btn')) return;
-                    loadTrack(idx, true);
-                    renderTracklistManager();
-                });
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-2 truncate flex-1">
-                        <span class="font-mono text-[10px] text-gray-600">${idx + 1}</span>
-                        <p class="truncate">${track.title}</p>
-                    </div>
-                    <button class="delete-track-btn text-gray-600 hover:text-red-400 px-1 ml-2 cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
-                `;
-
-                item.querySelector('.delete-track-btn').addEventListener('click', () => {
-                    tracks.splice(idx, 1);
-                    playlists[activePlaylistKey] = tracks;
-                    saveToStorage();
-                    renderTracklistManager();
-                    if (currentTrackIndex >= tracks.length) currentTrackIndex = Math.max(0, tracks.length - 1);
-                });
-                trackListBox.appendChild(item);
-            });
-        }
-
-        // MODALS EXECUTION
-        document.getElementById('btn-create-playlist').addEventListener('click', () => {
-            document.getElementById('input-playlist-name').value = '';
-            modalCreate.classList.remove('hidden');
-        });
-        document.getElementById('btn-create-cancel').addEventListener('click', () => modalCreate.classList.add('hidden'));
-        document.getElementById('btn-create-confirm').addEventListener('click', () => {
-            const name = document.getElementById('input-playlist-name').value.trim();
-            if (name) {
-                if (playlists[name]) return showCustomAlert('Tên playlist đã tồn tại!');
-                playlists[name] = []; activePlaylistKey = name;
-                saveToStorage(); initPlaylistDropdown(); renderTracklistManager();
-                modalCreate.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('btn-export').addEventListener('click', () => {
-            const dataStr = JSON.stringify({ playlistName: activePlaylistKey, tracks: playlists[activePlaylistKey] || [] });
-            navigator.clipboard.writeText(dataStr).then(() => {
-                showCustomAlert('Đã copy mã cấu hình JSON!', 'fa-circle-check', 'text-cyan-400');
-            });
-        });
-
-        document.getElementById('btn-import').addEventListener('click', () => modalImport.classList.remove('hidden'));
-        document.getElementById('btn-modal-cancel').addEventListener('click', () => modalImport.classList.add('hidden'));
-        document.getElementById('btn-modal-confirm').addEventListener('click', () => {
-            const jsonText = document.getElementById('textarea-import-json').value.trim();
-            try {
-                const parsed = JSON.parse(jsonText);
-                if (parsed.playlistName && Array.isArray(parsed.tracks)) {
-                    playlists[parsed.playlistName] = parsed.tracks;
-                    activePlaylistKey = parsed.playlistName;
-                    saveToStorage(); initPlaylistDropdown(); renderTracklistManager();
-                    modalImport.classList.add('hidden');
-                    document.getElementById('textarea-import-json').value = '';
-                    loadTrack(0, false);
-                    showCustomAlert('Đồng bộ JSON thành công!', 'fa-circle-check', 'text-cyan-400');
-                }
-            } catch(e) { showCustomAlert('Cú pháp JSON không chuẩn!', 'fa-circle-xmark'); }
-        });
-
-        // INITIALIZE APP
-        initPlaylistDropdown();
-        loadTrack(currentTrackIndex, false);
-    </script>
+    // Helper Format thời gian
+    function formatTime(time) {
+      if (isNaN(time) || time === undefined) return "0:00";
+      time = Math.round(time);
+      var minutes = Math.floor(time / 60);
+      var seconds = time - minutes * 60;
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      return minutes + ":" + seconds;
+    }
+  </script>
 </body>
 </html>
