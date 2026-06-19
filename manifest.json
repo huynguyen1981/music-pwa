@@ -1,11 +1,10 @@
 {
-  "name": "DriveCompanion Music Portal",
+  "name": "DriveCompanion Music Hub",
   "short_name": "DriveCompanion",
-  "description": "Hệ thống quản lý và phát nhạc YouTube tùy biến chất lượng cao không dính lỗi CORS.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0b0f19",
-  "theme-color": "#0b0f19",
+  "background_color": "#0B0E14",
+  "theme_color": "#1ED760",
   "orientation": "portrait",
   "icons": [
     {
