@@ -208,7 +208,7 @@
     }
 
     /* ==========================================================================
-       BOTTOM SHEET (PRO FEATURING - FIXED & FULL ENGLISH)
+       BOTTOM SHEET (PRO FEATURING)
        ========================================================================== */
     .bottom-sheet {
       background-color: var(--bg-card);
@@ -261,7 +261,6 @@
       color: var(--bg-main);
     }
 
-    /* Responsive Guard */
     @media (min-width: 768px) {
       .music-app { border: 8px solid #222; }
     }
@@ -271,11 +270,7 @@
 
   <div class="music-app">
     <div class="youtube-wrapper">
-      <iframe id="youtube-player" 
-              src="https://www.youtube.com/embed/jfKfPfyJRdk?enablejsapi=1&playsinline=1&controls=0&disablekb=1" 
-              allow="autoplay; compute-pressure" 
-              style="border: none;">
-      </iframe>
+      <div id="youtube-player"></div>
     </div>
 
     <div class="app-header">
@@ -290,7 +285,7 @@
       </div>
 
       <div class="track-info">
-        <h2 class="track-title" id="title-display">Loading track...</h2>
+        <h2 class="track-title" id="title-display">Connecting YouTube...</h2>
         <p class="track-artist">YouTube Stream</p>
       </div>
 
@@ -337,18 +332,30 @@
   </div>
 
   <script>
-    // Tải script API chính chủ của Youtube
+    // 1. Tải script API chính chủ
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
     var player;
+    var testVideoId = "jfKfPfyJRdk"; // ID video bài lofi
 
-    // Hàm tự động chạy khi Youtube API sẵn sàng
+    // 2. Hàm khởi tạo động để tự bắt Origin thông minh
     function onYouTubeIframeAPIReady() {
-      // Khởi tạo Player trỏ thẳng vào Id của cái Iframe tĩnh đã có sẵn trong DOM
+      // Xác định origin tự động dựa vào môi trường đang chạy (localhost hoặc github.io)
+      const currentOrigin = window.location.origin || (window.location.protocol + '//' + window.location.host);
+
       player = new YT.Player('youtube-player', {
+        height: '0',
+        width: '0',
+        videoId: testVideoId,
+        playerVars: {
+          'playsinline': 1,
+          'controls': 0,
+          'disablekb': 1,
+          'origin': currentOrigin // FIX QUYẾT ĐỊNH: Ép ăn theo domain hiện tại
+        },
         events: {
           'onReady': onPlayerReady,
           'onStateChange': onPlayerStateChange
@@ -367,18 +374,16 @@
     let timer;
 
     function onPlayerReady(event) {
-      // Đọc metadata trực tiếp từ Iframe để hiển thị
-      if(player && typeof player.getVideoData === 'function') {
-        titleDisplay.innerText = player.getVideoData().title || "Lofi Chill Track";
-        durationText.innerText = formatTime(player.getDuration());
-      }
+      // Khi kết nối thành công, đổi text và hiển thị thời lượng
+      titleDisplay.innerText = player.getVideoData().title || "Lofi Chill Track";
+      durationText.innerText = formatTime(player.getDuration());
+      console.log("YouTube Player Ready!");
     }
 
     function onPlayerStateChange(event) {
       if (event.data == YT.PlayerState.PLAYING) {
         playIcon.className = "fa-solid fa-pause";
         artworkBox.classList.add('playing');
-        durationText.innerText = formatTime(player.getDuration());
         startProgressLoop();
       } else {
         playIcon.className = "fa-solid fa-play";
@@ -387,10 +392,10 @@
       }
     }
 
-    // Toggle Play/Pause dứt điểm - Đã check an toàn tránh lỗi "not a function"
+    // Toggle Play/Pause an toàn
     playTrigger.addEventListener('click', () => {
       if (!player || typeof player.getPlayerState !== 'function') {
-        console.log("YouTube Player is still initializing...");
+        alert("YouTube Player is still connecting. Please wait a second!");
         return;
       }
       
@@ -402,7 +407,6 @@
       }
     });
 
-    // Xử lý Timeline Tracking
     function startProgressLoop() {
       clearInterval(timer);
       timer = setInterval(() => {
@@ -417,7 +421,6 @@
       }, 1000);
     }
 
-    // Tua nhạc khi click vào thanh Progress Bar
     timeline.addEventListener('click', (e) => {
       if (!player || typeof player.seekTo !== 'function') return;
       const rect = timeline.getBoundingClientRect();
@@ -428,7 +431,6 @@
       player.seekTo(seekToTime, true);
     });
 
-    // Helper Format thời gian
     function formatTime(time) {
       if (isNaN(time) || time === undefined) return "0:00";
       time = Math.round(time);
