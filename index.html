@@ -4,29 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DriveCompanion - Pro Music Player</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1ED760">
+  
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
-    /* ==========================================================================
-       VARIABLES & BASE STYLES
-       ========================================================================== */
     :root {
       --bg-main: #0B0E14;
       --bg-card: #161A23;
-      --bg-accent: #1ED760; /* Spotify Green */
+      --bg-accent: #1ED760;
       --text-main: #FFFFFF;
       --text-muted: #8E9AA8;
       --border-radius: 24px;
       --transition: all 0.3s ease;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Inter', sans-serif;
       background-color: #030406;
@@ -36,10 +30,6 @@
       min-height: 100vh;
       color: var(--text-main);
     }
-
-    /* ==========================================================================
-       APP CONTAINER (MOBILE-FIRST)
-       ========================================================================== */
     .music-app {
       background-color: var(--bg-main);
       width: 100%;
@@ -53,217 +43,34 @@
       flex-direction: column;
       position: relative;
     }
-
-    /* Hidden YouTube Player Wrapper */
-    .youtube-wrapper {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Header */
-    .app-header {
-      padding: 24px 24px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-    }
-    .app-header i {
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-    .app-header span {
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-    }
-
-    /* Player Body Content */
-    .player-body {
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 0 32px;
-    }
-
-    /* Artwork with Glow effect when Playing */
-    .artwork-wrapper {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      margin-bottom: 32px;
-    }
-    .artwork-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: var(--border-radius);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      transition: var(--transition);
-    }
-    .artwork-wrapper.playing .artwork-img {
-      transform: scale(1.02);
-    }
-    .artwork-wrapper.playing::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--border-radius);
-      box-shadow: 0 0 35px rgba(30, 215, 96, 0.4);
-      z-index: -1;
-    }
-
-    /* Track Metadata */
-    .track-info {
-      text-align: center;
-      margin-bottom: 24px;
-      width: 100%;
-    }
-    .track-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .track-artist {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-    }
-
-    /* Progress Timeline */
-    .progress-container {
-      width: 100%;
-      margin-bottom: 32px;
-    }
-    .progress-bar {
-      width: 100%;
-      height: 6px;
-      background-color: #262D3B;
-      border-radius: 3px;
-      position: relative;
-      cursor: pointer;
-    }
-    .progress-current {
-      width: 0%;
-      height: 100%;
-      background-color: var(--bg-accent);
-      border-radius: 3px;
-      transition: width 0.1s linear;
-    }
-    .progress-time {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    /* Media Core Controls */
-    .main-controls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      padding: 0 16px;
-      margin-bottom: 24px;
-    }
-    .btn-secondary {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: var(--transition);
-    }
+    .youtube-wrapper { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .app-header { padding: 24px 24px 12px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+    .app-header i { color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+    .app-header span { font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; color: var(--text-muted); }
+    .player-body { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 32px; }
+    .artwork-wrapper { position: relative; width: 280px; height: 280px; margin-bottom: 32px; }
+    .artwork-img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--border-radius); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); transition: var(--transition); }
+    .artwork-wrapper.playing .artwork-img { transform: scale(1.02); }
+    .artwork-wrapper.playing::after { content: ''; position: absolute; inset: 0; border-radius: var(--border-radius); box-shadow: 0 0 35px rgba(30, 215, 96, 0.4); z-index: -1; }
+    .track-info { text-align: center; margin-bottom: 24px; width: 100%; }
+    .track-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-artist { font-size: 0.95rem; color: var(--text-muted); }
+    .progress-container { width: 100%; margin-bottom: 32px; }
+    .progress-bar { width: 100%; height: 6px; background-color: #262D3B; border-radius: 3px; position: relative; cursor: pointer; }
+    .progress-current { width: 0%; height: 100%; background-color: var(--bg-accent); border-radius: 3px; transition: width 0.1s linear; }
+    .progress-time { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; color: var(--text-muted); }
+    .main-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 16px; margin-bottom: 24px; }
+    .btn-secondary { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; transition: var(--transition); }
     .btn-secondary:hover { color: var(--text-main); }
-    
-    .btn-primary {
-      background-color: var(--text-main);
-      border: none;
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 1.6rem;
-      color: var(--bg-main);
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
-      transition: var(--transition);
-    }
-    .btn-primary:hover {
-      transform: scale(1.05);
-      background-color: var(--bg-accent);
-      color: var(--bg-main);
-    }
-
-    /* ==========================================================================
-       BOTTOM SHEET (PRO FEATURING)
-       ========================================================================== */
-    .bottom-sheet {
-      background-color: var(--bg-card);
-      border-top-left-radius: 32px;
-      border-top-right-radius: 32px;
-      padding: 16px 24px 32px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .sheet-handle {
-      width: 40px;
-      height: 4px;
-      background-color: #384252;
-      border-radius: 2px;
-      margin-bottom: 20px;
-    }
-    .toolbar-features {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-    }
-    .feature-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 8px;
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      font-weight: 500;
-      cursor: pointer;
-      flex: 1;
-      min-width: 0;
-    }
-    .feature-item i {
-      font-size: 1.2rem;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #1F2431;
-      border-radius: 50%;
-      color: var(--text-main);
-      transition: var(--transition);
-    }
-    .feature-item:hover i {
-      background-color: var(--bg-accent);
-      color: var(--bg-main);
-    }
-
-    @media (min-width: 768px) {
-      .music-app { border: 8px solid #222; }
-    }
+    .btn-primary { background-color: var(--text-main); border: none; width: 72px; height: 72px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.6rem; color: var(--bg-main); cursor: pointer; box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1); transition: var(--transition); }
+    .btn-primary:hover { transform: scale(1.05); background-color: var(--bg-accent); color: var(--bg-main); }
+    .bottom-sheet { background-color: var(--bg-card); border-top-left-radius: 32px; border-top-right-radius: 32px; padding: 16px 24px 32px; display: flex; flex-direction: column; align-items: center; }
+    .sheet-handle { width: 40px; height: 4px; background-color: #384252; border-radius: 2px; margin-bottom: 20px; }
+    .toolbar-features { display: flex; justify-content: space-between; width: 100%; }
+    .feature-item { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; cursor: pointer; flex: 1; min-width: 0; }
+    .feature-item i { font-size: 1.2rem; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background-color: #1F2431; border-radius: 50%; color: var(--text-main); transition: var(--transition); }
+    .feature-item:hover i { background-color: var(--bg-accent); color: var(--bg-main); }
+    @media (min-width: 768px) { .music-app { border: 8px solid #222; } }
   </style>
 </head>
 <body>
@@ -332,18 +139,15 @@
   </div>
 
   <script>
-    // 1. Tải script API chính chủ
     var tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     var firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
     var player;
-    var testVideoId = "jfKfPfyJRdk"; // ID video bài lofi
+    var testVideoId = "jfKfPfyJRdk"; 
 
-    // 2. Hàm khởi tạo động để tự bắt Origin thông minh
     function onYouTubeIframeAPIReady() {
-      // Xác định origin tự động dựa vào môi trường đang chạy (localhost hoặc github.io)
       const currentOrigin = window.location.origin || (window.location.protocol + '//' + window.location.host);
 
       player = new YT.Player('youtube-player', {
@@ -354,7 +158,7 @@
           'playsinline': 1,
           'controls': 0,
           'disablekb': 1,
-          'origin': currentOrigin // FIX QUYẾT ĐỊNH: Ép ăn theo domain hiện tại
+          'origin': currentOrigin
         },
         events: {
           'onReady': onPlayerReady,
@@ -374,7 +178,6 @@
     let timer;
 
     function onPlayerReady(event) {
-      // Khi kết nối thành công, đổi text và hiển thị thời lượng
       titleDisplay.innerText = player.getVideoData().title || "Lofi Chill Track";
       durationText.innerText = formatTime(player.getDuration());
       console.log("YouTube Player Ready!");
@@ -392,13 +195,11 @@
       }
     }
 
-    // Toggle Play/Pause an toàn
     playTrigger.addEventListener('click', () => {
       if (!player || typeof player.getPlayerState !== 'function') {
         alert("YouTube Player is still connecting. Please wait a second!");
         return;
       }
-      
       const state = player.getPlayerState();
       if (state == YT.PlayerState.PLAYING) {
         player.pauseVideo();
@@ -438,6 +239,15 @@
       var seconds = time - minutes * 60;
       seconds = seconds < 10 ? '0' + seconds : seconds;
       return minutes + ":" + seconds;
+    }
+
+    // REGISTER SERVICE WORKER FOR PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker Registered!', reg))
+          .catch(err => console.log('Service Worker Register Failed', err));
+      });
     }
   </script>
 </body>
