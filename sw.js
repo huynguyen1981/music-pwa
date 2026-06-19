@@ -1,4 +1,4 @@
-const CACHE_NAME = 'drivecompanion-v2'; // Đổi tên version để ép trình duyệt xóa cache cũ
+const CACHE_NAME = 'drivecompanion-v2.1'; // Đổi tên version để ép trình duyệt xóa cache cũ
 const ASSETS = [
   'index.html',
   'manifest.json',
